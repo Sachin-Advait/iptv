@@ -21,7 +21,7 @@ class AppBanner {
   // Lists (useful for sliders, carousels, TV rows)
   static const List<String> homeBanners = [banner01, person01];
 
-  static const List<String> vodBanners = [banner02, person02];
+  static const List<String> vodBanners = [banner02, person03];
 
-  static const List<String> catchUpBanners = [banner03, person03];
+  static const List<String> catchUpBanners = [banner03, person04];
 }

@@ -75,15 +75,7 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
                 ),
                 12.verticalSpace,
                 LiveTVGroup(rowId: 0),
-              ],
-            ),
-          ),
-          20.verticalSpace,
-          Padding(
-            padding: EdgeInsets.only(left: 20.widthMultiplier),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                20.verticalSpace,
                 Text(
                   'Radio Group',
                   style: context.bold.copyWith(
@@ -92,21 +84,8 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
                   ),
                 ),
                 12.verticalSpace,
-                RadioGroup(
-                  rowId: 1,
-                  onItemPressed: () {
-                    debugPrint("Radio item pressed");
-                  },
-                ),
-              ],
-            ),
-          ),
-          20.verticalSpace,
-          Padding(
-            padding: EdgeInsets.only(left: 20.widthMultiplier),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                RadioGroup(rowId: 1),
+                20.verticalSpace,
                 Text(
                   'Announcement',
                   style: context.bold.copyWith(
@@ -119,7 +98,6 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
               ],
             ),
           ),
-
           30.verticalSpace,
         ],
       ),

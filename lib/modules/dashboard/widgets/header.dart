@@ -38,7 +38,11 @@ class Header extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(_tabLabels.length, (index) {
-                return CustomTab(id: index, label: _tabLabels[index]);
+                return CustomTab(
+                  id: index,
+                  label: _tabLabels[index],
+                  isSelected: currentIndex == index,
+                );
               }),
             ),
           ),

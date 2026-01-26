@@ -8,8 +8,14 @@ import 'package:oman_tv/configs/theme/app_theme.dart';
 class CustomTab extends StatefulWidget {
   final int id;
   final String label;
+  final bool isSelected;
 
-  const CustomTab({super.key, required this.id, required this.label});
+  const CustomTab({
+    super.key,
+    required this.id,
+    required this.label,
+    required this.isSelected,
+  });
 
   @override
   State<CustomTab> createState() => _CustomTabState();
@@ -25,6 +31,9 @@ class _CustomTabState extends State<CustomTab> {
     _focusNode.column = widget.id;
 
     final bool isFocused = _isFocused;
+
+    final bool isSelected = widget.isSelected;
+    final bool showSelected = isSelected && !isFocused;
 
     return GestureDetector(
       onTap: () {
@@ -47,7 +56,7 @@ class _CustomTabState extends State<CustomTab> {
             vertical: 10.heightMultiplier,
           ),
           decoration: BoxDecoration(
-            gradient: isFocused
+            gradient: isFocused || showSelected
                 ? LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
