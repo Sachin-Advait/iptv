@@ -1,148 +1,268 @@
-// import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
-// import 'package:media_kit/media_kit.dart';
-// import 'package:media_kit_video/media_kit_video.dart';
-// import 'package:oman_tv/configs/theme/app_colors.dart';
+import 'dart:async';
 
-// class VideoScreen extends StatefulWidget {
-//   const VideoScreen({super.key});
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:oman_tv/configs/theme/app_colors.dart';
+import 'package:video_player/video_player.dart';
 
-//   @override
-//   State<VideoScreen> createState() => _VideoScreenState();
-// }
+class VideoScreen extends StatefulWidget {
+  const VideoScreen({super.key});
 
-// class _VideoScreenState extends State<VideoScreen>
-//     with TickerProviderStateMixin {
-//   late final Player _player;
-//   late final VideoController _videoController;
+  @override
+  State<VideoScreen> createState() => _VideoScreenState();
+}
 
-//   late AnimationController _scaleVideoAnimationController;
-//   Animation<double> _scaleVideoAnimation = const AlwaysStoppedAnimation<double>(
-//     1.0,
-//   );
+class _VideoScreenState extends State<VideoScreen> {
+  late VideoPlayerController _controller;
+  bool _showControls = true;
+  Timer? _autoHideTimer;
 
-//   double _lastZoomGestureScale = 1.0;
+  @override
+  void initState() {
+    super.initState();
 
-//   @override
-//   void initState() {
-//     super.initState();
+    _controller = VideoPlayerController.networkUrl(
+      Uri.parse(
+        "https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8",
+      ),
+    );
 
-//     MediaKit.ensureInitialized();
-//     _forceLandscape();
+    _controller
+        .initialize()
+        .then((_) {
+          setState(() {});
+          _controller.setLooping(true);
+          _controller.setVolume(1.0);
+          _controller.play();
+          _startAutoHide();
+        })
+        .catchError((e) {
+          debugPrint("VIDEO INIT ERROR: $e");
+        });
+  }
 
-//     _scaleVideoAnimationController = AnimationController(
-//       duration: const Duration(milliseconds: 125),
-//       vsync: this,
-//     );
+  @override
+  void dispose() {
+    _autoHideTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
 
-//     _player = Player(
-//       configuration: const PlayerConfiguration(
-//         bufferSize: 32 * 1024 * 1024, // stable buffering
-//       ),
-//     );
+  // ----------------- Controls -----------------
 
-//     _videoController = VideoController(_player);
+  void _togglePlay() {
+    setState(() {
+      _controller.value.isPlaying ? _controller.pause() : _controller.play();
+    });
+    _startAutoHide();
+  }
 
-//     /// ▶️ Normal MP4 (replace with multicast when needed)
-//     _player.open(
-//       Media(
-//         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  void _showUI() {
+    setState(() {
+      _showControls = true;
+    });
+    _startAutoHide();
+  }
 
-//         /// 🔴 Multicast example:
-//         /// "udp://@239.0.0.1:1234",
-//       ),
-//       play: false, // no autoplay bug
-//     );
-//   }
+  void _hideUI() {
+    setState(() {
+      _showControls = false;
+    });
+  }
 
-//   Future<void> _forceLandscape() async {
-//     await SystemChrome.setPreferredOrientations([
-//       DeviceOrientation.landscapeRight,
-//       DeviceOrientation.landscapeLeft,
-//     ]);
-//     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-//   }
+  void _startAutoHide() {
+    _autoHideTimer?.cancel();
+    _autoHideTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _showControls = false;
+        });
+      }
+    });
+  }
 
-//   Future<void> _forcePortrait() async {
-//     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-//     await SystemChrome.setEnabledSystemUIMode(
-//       SystemUiMode.manual,
-//       overlays: SystemUiOverlay.values,
-//     );
-//   }
+  // ----------------- Seek -----------------
 
-//   @override
-//   void dispose() {
-//     _forcePortrait();
-//     _player.dispose();
-//     _scaleVideoAnimationController.dispose();
-//     super.dispose();
-//   }
+  void _seekBy(Duration offset) {
+    final pos = _controller.value.position;
+    final dur = _controller.value.duration;
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return WillPopScope(
-//       onWillPop: () async {
-//         Navigator.pop(context);
-//         return false;
-//       },
-//       child: Scaffold(
-//         backgroundColor: Colors.black,
-//         body: Material(
-//           color: Colors.transparent,
-//           child: GestureDetector(
-//             onTap: () {
-//               if (_player.state.playing) {
-//                 _player.pause();
-//               } else {
-//                 _player.play();
-//               }
-//             },
-//             onScaleUpdate: (details) {
-//               _lastZoomGestureScale = details.scale;
-//             },
-//             onScaleEnd: (details) {
-//               if (_lastZoomGestureScale > 1.0) {
-//                 _scaleVideoAnimation = Tween<double>(
-//                   begin: 1.0,
-//                   end: 1.25,
-//                 ).animate(_scaleVideoAnimationController);
-//                 _scaleVideoAnimationController.forward(from: 0);
-//               } else if (_lastZoomGestureScale < 1.0) {
-//                 _scaleVideoAnimation = Tween<double>(
-//                   begin: 1.25,
-//                   end: 1.0,
-//                 ).animate(_scaleVideoAnimationController);
-//                 _scaleVideoAnimationController.forward(from: 0);
-//               }
-//               _lastZoomGestureScale = 1.0;
-//             },
-//             child: Stack(
-//               children: [
-//                 Container(color: Colors.black),
-//                 Center(
-//                   child: ScaleTransition(
-//                     scale: _scaleVideoAnimation,
-//                     child: AspectRatio(
-//                       aspectRatio: 16 / 9,
-//                       child: Video(
-//                         controller: _videoController,
-//                         fit: BoxFit.contain,
-//                         controls: NoVideoControls, // clean fullscreen
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//                 const Positioned(
-//                   bottom: 20,
-//                   left: 20,
-//                   child: CircularProgressIndicator(color: AppColors.primary),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+    Duration target = pos + offset;
+    if (target < Duration.zero) target = Duration.zero;
+    if (target > dur) target = dur;
+
+    _controller.seekTo(target);
+    _showUI();
+  }
+
+  /// Dial pad seek (0–9)
+  void _seekByPercent(int digit) {
+    if (!_controller.value.isInitialized) return;
+
+    final dur = _controller.value.duration;
+    final percent = digit / 10; // 0.0 → 0%, 1 → 10%, ... 9 → 90%
+    final target = dur * percent;
+
+    _controller.seekTo(target);
+    _showUI();
+  }
+
+  // ----------------- UI -----------------
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        if (_showControls) {
+          _hideUI(); // Netflix behavior
+          return false;
+        } else {
+          return true; // exit screen
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: !_controller.value.isInitialized
+            ? const Center(child: CircularProgressIndicator(color: AppColors.primary,))
+            : Focus(
+                autofocus: true,
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent) {
+                    final key = event.logicalKey;
+
+                    // 🎮 OK / SELECT
+                    if (key == LogicalKeyboardKey.select ||
+                        key == LogicalKeyboardKey.enter ||
+                        key == LogicalKeyboardKey.gameButtonA) {
+                      if (!_showControls) {
+                        _showUI();
+                      } else {
+                        _togglePlay();
+                      }
+                      return KeyEventResult.handled;
+                    }
+
+                    // 🔙 BACK handled by WillPopScope
+
+                    // ⬅️➡️ DPAD SEEK
+                    if (key == LogicalKeyboardKey.arrowRight) {
+                      _seekBy(const Duration(seconds: 10));
+                      return KeyEventResult.handled;
+                    }
+
+                    if (key == LogicalKeyboardKey.arrowLeft) {
+                      _seekBy(const Duration(seconds: -10));
+                      return KeyEventResult.handled;
+                    }
+
+                    // 🔢 DIAL PAD SEEK (0–9)
+                    if (key == LogicalKeyboardKey.digit0) {
+                      _seekByPercent(0);
+                      return KeyEventResult.handled;
+                    }
+                    if (key == LogicalKeyboardKey.digit1) {
+                      _seekByPercent(1);
+                      return KeyEventResult.handled;
+                    }
+                    if (key == LogicalKeyboardKey.digit2) {
+                      _seekByPercent(2);
+                      return KeyEventResult.handled;
+                    }
+                    if (key == LogicalKeyboardKey.digit3) {
+                      _seekByPercent(3);
+                      return KeyEventResult.handled;
+                    }
+                    if (key == LogicalKeyboardKey.digit4) {
+                      _seekByPercent(4);
+                      return KeyEventResult.handled;
+                    }
+                    if (key == LogicalKeyboardKey.digit5) {
+                      _seekByPercent(5);
+                      return KeyEventResult.handled;
+                    }
+                    if (key == LogicalKeyboardKey.digit6) {
+                      _seekByPercent(6);
+                      return KeyEventResult.handled;
+                    }
+                    if (key == LogicalKeyboardKey.digit7) {
+                      _seekByPercent(7);
+                      return KeyEventResult.handled;
+                    }
+                    if (key == LogicalKeyboardKey.digit8) {
+                      _seekByPercent(8);
+                      return KeyEventResult.handled;
+                    }
+                    if (key == LogicalKeyboardKey.digit9) {
+                      _seekByPercent(9);
+                      return KeyEventResult.handled;
+                    }
+                  }
+
+                  return KeyEventResult.ignored;
+                },
+                child: Stack(
+                  children: [
+                    // 🔥 VIDEO
+                    SizedBox.expand(
+                      child: FittedBox(
+                        fit: BoxFit.cover,
+                        child: SizedBox(
+                          width: _controller.value.size.width,
+                          height: _controller.value.size.height,
+                          child: VideoPlayer(_controller),
+                        ),
+                      ),
+                    ),
+
+                    // 🎚 SEEK BAR
+                    if (_showControls)
+                      Positioned(
+                        bottom: 40,
+                        left: 60,
+                        right: 60,
+                        child: VideoProgressIndicator(
+                          _controller,
+                          allowScrubbing: true,
+                          colors: VideoProgressColors(
+                            playedColor: Colors.redAccent,
+                            bufferedColor: Colors.white38,
+                            backgroundColor: Colors.white12,
+                          ),
+                        ),
+                      ),
+
+                    // 🎛 CONTROLS
+                    if (_showControls)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withOpacity(0.35),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _controller.value.isPlaying
+                                    ? Icons.pause_circle_filled
+                                    : Icons.play_circle_filled,
+                                size: 100,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                _controller.value.isPlaying ? "PAUSE" : "PLAY",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+}

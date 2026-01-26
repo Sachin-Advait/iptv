@@ -20,6 +20,9 @@ dependencies:
   flutter_svg: ^2.2.3
   carousel_slider: ^5.1.1
   collection: ^1.19.1
+  video_player: ^2.10.1
+  wakelock_plus: ^1.4.0
+  just_audio: ^0.10.5
 
 dev_dependencies:
   flutter_test:

@@ -23,6 +23,7 @@
         android:label="Oman TV"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:banner="@drawable/banner">
         
         <activity

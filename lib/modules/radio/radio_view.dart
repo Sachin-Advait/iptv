@@ -6,6 +6,7 @@ import 'package:oman_tv/configs/assets/app_images.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/radio/widget/radio_card.dart';
+import 'package:oman_tv/modules/radio/widget/radio_player_service.dart';
 
 class RadioView extends StatefulWidget {
   const RadioView({super.key});
@@ -15,6 +16,16 @@ class RadioView extends StatefulWidget {
 }
 
 class _RadioViewState extends State<RadioView> implements FocusListener {
+  final RadioPlayerService _player = RadioPlayerService();
+
+  void _onStationSelected(RadioStation station) async {
+    setState(() {
+      currentlyPlaying = station;
+    });
+
+    await _player.play(station.streamUrl);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -29,12 +40,6 @@ class _RadioViewState extends State<RadioView> implements FocusListener {
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    FocusListener.remove(this);
-  }
-
   RadioStation? currentlyPlaying;
 
   final List<RadioStation> radioStations = [
@@ -42,28 +47,37 @@ class _RadioViewState extends State<RadioView> implements FocusListener {
       name: 'Oman Quran Radio',
       imagePath: AppChannels.ubc,
       frequency: '',
+      streamUrl:
+          'https://n0e.radiojar.com/4wqre23fytzuv?rj-ttl=5&rj-tok=AAABm_pqdQ8Awie7CBzNbchVzA',
     ),
     RadioStation(
       name: 'Radio Oman',
       imagePath: AppChannels.omanAir,
       frequency: '107.1 FM',
+      streamUrl:
+          'https://n0e.radiojar.com/4wqre23fytzuv?rj-ttl=5&rj-tok=AAABm_pqdQ8Awie7CBzNbchVzA',
     ),
     RadioStation(
       name: 'Hi FM Oman',
       imagePath: AppChannels.hifm,
       frequency: '',
+      streamUrl:
+          'https://n0e.radiojar.com/4wqre23fytzuv?rj-ttl=5&rj-tok=AAABm_pqdQ8Awie7CBzNbchVzA',
     ),
     RadioStation(
       name: 'Merge FN Oman',
       imagePath: AppChannels.merge,
       frequency: '104.6',
+      streamUrl:
+          'https://n0e.radiojar.com/4wqre23fytzuv?rj-ttl=5&rj-tok=AAABm_pqdQ8Awie7CBzNbchVzA',
     ),
   ];
 
-  void _onStationSelected(RadioStation station) {
-    setState(() {
-      currentlyPlaying = station;
-    });
+  @override
+  void dispose() {
+    _player.stop();
+    FocusListener.remove(this);
+    super.dispose();
   }
 
   @override

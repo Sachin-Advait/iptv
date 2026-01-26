@@ -42,43 +42,66 @@ class _GroupCardState extends State<GroupCard> {
           builder: (context) {
             final isFocused = Focus.of(context).hasFocus;
 
-            return Container(
-              width: 230.widthMultiplier,
-              height: 82.heightMultiplier,
-              padding: EdgeInsets.all(20.widthMultiplier),
-              decoration: BoxDecoration(
-                color: isFocused ? AppColors.beige : AppColors.lightBeige,
-                borderRadius: BorderRadius.circular(16.radiusMultipier),
-                border: isFocused
-                    ? Border.all(color: AppColors.primary, width: 3)
-                    : null,
-              ),
-              child: Center(
-                child: widget.item.imageType == RadioImageType.asset
-                    ? Image.asset(
-                        widget.item.imagePath,
-                        width: widget.item.imageWidth ?? 120.widthMultiplier,
-                        height: widget.item.imageHeight ?? 80.heightMultiplier,
-                        fit: BoxFit.contain,
-                      )
-                    : Image.network(
-                        widget.item.imagePath,
-                        width: widget.item.imageWidth ?? 120.widthMultiplier,
-                        height: widget.item.imageHeight ?? 80.heightMultiplier,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[200],
-                            child: Center(
-                              child: Icon(
-                                Icons.broken_image,
-                                size: 40.widthMultiplier,
-                                color: Colors.grey[400],
-                              ),
+            return AnimatedScale(
+              scale: isFocused ? 1.1 : 1,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 5.widthMultiplier),
+                width: 230.widthMultiplier,
+                height: 82.heightMultiplier,
+                padding: EdgeInsets.symmetric(vertical: 16.heightMultiplier),
+                decoration: BoxDecoration(
+                  color: isFocused ? AppColors.beige : AppColors.lightBeige,
+                  borderRadius: BorderRadius.circular(16.radiusMultipier),
+                  boxShadow: isFocused
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isFocused ? 0.2 : 0.1,
                             ),
-                          );
-                        },
-                      ),
+                            blurRadius: isFocused ? 10 : 8,
+                            offset: Offset(0, isFocused ? 8 : 4),
+                            spreadRadius: isFocused ? 2 : 0,
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Center(
+                  child: AnimatedScale(
+                    scale: isFocused ? 1.05 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: widget.item.imageType == RadioImageType.asset
+                        ? Image.asset(
+                            widget.item.imagePath,
+                            width:
+                                widget.item.imageWidth ?? 120.widthMultiplier,
+                            height:
+                                widget.item.imageHeight ?? 80.heightMultiplier,
+                            fit: BoxFit.contain,
+                          )
+                        : Image.network(
+                            widget.item.imagePath,
+                            width:
+                                widget.item.imageWidth ?? 120.widthMultiplier,
+                            height:
+                                widget.item.imageHeight ?? 80.heightMultiplier,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    size: 40.widthMultiplier,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ),
               ),
             );
           },

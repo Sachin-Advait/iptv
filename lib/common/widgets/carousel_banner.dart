@@ -124,22 +124,22 @@ class _CarouselBannerState extends State<CarouselBanner> {
               },
               child: Builder(
                 builder: (context) {
-                  final focused = Focus.of(context).hasFocus;
+                  final isFocused = Focus.of(context).hasFocus;
 
-                  return GestureDetector(
-                    onTap: () {
-                      RecentFocusTraversalPolicy.setFocus(_playFocusNode, true);
-                      widget.onPlayPressed?.call();
-                    },
+                  return AnimatedScale(
+                    scale: isFocused ? 1.2 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
                     child: Container(
+                      margin: EdgeInsets.only(left: 10),
                       padding: EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
-                        color: focused ? AppColors.beige : Colors.white,
-                        boxShadow: focused
+                        color: isFocused ? AppColors.beige : Colors.white,
+                        boxShadow: isFocused
                             ? [
                                 BoxShadow(
                                   color: AppColors.beige.withValues(alpha: 0.6),
@@ -156,7 +156,7 @@ class _CarouselBannerState extends State<CarouselBanner> {
                             color: AppColors.black,
                           ),
                           6.horizontalSpace,
-                          Text("Play", style: context.medium),
+                          Text("Play", style: context.semiBold),
                         ],
                       ),
                     ),

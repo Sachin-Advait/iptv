@@ -46,41 +46,55 @@ class _CategoryCardState extends State<CategoryCard> {
           builder: (context) {
             final isFocused = Focus.of(context).hasFocus;
 
-            return Container(
-              alignment: Alignment.center,
-              width: 230.widthMultiplier,
-              padding: EdgeInsets.symmetric(
-                horizontal: 10.widthMultiplier,
-                vertical: 16.heightMultiplier,
-              ),
-              decoration: BoxDecoration(
-                color: isFocused ? AppColors.primary : AppColors.beige,
-                borderRadius: BorderRadius.circular(16.radiusMultipier),
-                border: isFocused
-                    ? Border.all(color: AppColors.white, width: 3)
-                    : null,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SvgPicture.asset(
-                    widget.icon,
-                    width: 40.widthMultiplier,
-                    height: 40.heightMultiplier,
-                    colorFilter: const ColorFilter.mode(
-                      AppColors.white,
-                      BlendMode.srcIn,
+            return AnimatedScale(
+              scale: isFocused ? 1.1 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 5.widthMultiplier),
+                alignment: Alignment.center,
+                width: 230.widthMultiplier,
+                padding: EdgeInsets.symmetric(vertical: 16.heightMultiplier),
+                decoration: BoxDecoration(
+                  color: isFocused ? AppColors.primary : AppColors.beige,
+                  borderRadius: BorderRadius.circular(16.radiusMultipier),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isFocused ? 0.2 : 0.1,
+                      ),
+                      blurRadius: isFocused ? 10 : 8,
+                      offset: Offset(0, isFocused ? 8 : 4),
+                      spreadRadius: isFocused ? 2 : 0,
                     ),
-                  ),
-                  25.horizontalSpace,
-                  Text(
-                    widget.label,
-                    style: context.semiBold.copyWith(
-                      fontSize: 20.textMultiplier,
-                      color: AppColors.white,
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AnimatedScale(
+                      scale: isFocused ? 1.1 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: SvgPicture.asset(
+                        widget.icon,
+                        width: 40.widthMultiplier,
+                        height: 40.heightMultiplier,
+                        colorFilter: const ColorFilter.mode(
+                          AppColors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    25.horizontalSpace,
+                    Text(
+                      widget.label,
+                      style: context.semiBold.copyWith(
+                        fontSize: 20.textMultiplier,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },

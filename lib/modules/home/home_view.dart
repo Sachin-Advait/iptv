@@ -10,6 +10,7 @@ import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/home/widget/announcement_card.dart';
 import 'package:oman_tv/modules/home/widget/category_card.dart';
 import 'package:oman_tv/modules/home/widget/group_card.dart';
+import 'package:oman_tv/modules/home/widget/vlc_player_page.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -49,53 +50,54 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
             child: CarouselBanner(
               banners: AppBanner.homeBanners,
               onPlayPressed: () {
-                // Navigator.of(context).push(
-                //   MaterialPageRoute(
-                //     builder: (context) {
-                //       return const VideoScreen();
-                //     },
-                //   ),
-                // );
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return const VideoScreen();
+                    },
+                  ),
+                );
               },
             ),
           ),
           20.verticalSpace,
-          Padding(
-            padding: EdgeInsets.only(left: 20.widthMultiplier),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(left: 20.widthMultiplier),
+                child: Text(
                   'Live TV Group',
                   style: context.bold.copyWith(
                     fontSize: 18.textMultiplier,
                     color: AppColors.black,
                   ),
                 ),
-                12.verticalSpace,
-                LiveTVGroup(rowId: 0),
-                20.verticalSpace,
-                Text(
+              ),
+              LiveTVGroup(rowId: 0),
+              Padding(
+                padding: EdgeInsets.only(left: 20.widthMultiplier),
+                child: Text(
                   'Radio Group',
                   style: context.bold.copyWith(
                     fontSize: 18.textMultiplier,
                     color: AppColors.black,
                   ),
                 ),
-                12.verticalSpace,
-                RadioGroup(rowId: 1),
-                20.verticalSpace,
-                Text(
+              ),
+              RadioGroup(rowId: 1),
+              Padding(
+                padding: EdgeInsets.only(left: 20.widthMultiplier),
+                child: Text(
                   'Announcement',
                   style: context.bold.copyWith(
                     fontSize: 18.textMultiplier,
                     color: AppColors.black,
                   ),
                 ),
-                12.verticalSpace,
-                AnnouncementSection(rowId: 2),
-              ],
-            ),
+              ),
+              AnnouncementSection(rowId: 2),
+            ],
           ),
           30.verticalSpace,
         ],
@@ -112,10 +114,14 @@ class LiveTVGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 82.heightMultiplier,
+      height: 120.heightMultiplier,
       child: FocusTraversalGroup(
         policy: const RecentFocusTraversalPolicy(group: FocusGroup.listRow),
         child: ListView(
+          padding: EdgeInsets.symmetric(
+            horizontal: 20.widthMultiplier,
+            vertical: 20.heightMultiplier,
+          ),
           scrollDirection: Axis.horizontal,
           children: [
             CategoryCard(
@@ -165,10 +171,14 @@ class AnnouncementSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 82.heightMultiplier,
+      height: 120.heightMultiplier,
       child: FocusTraversalGroup(
         policy: const RecentFocusTraversalPolicy(group: FocusGroup.listRow),
         child: ListView(
+          padding: EdgeInsets.symmetric(
+            horizontal: 20.widthMultiplier,
+            vertical: 20.heightMultiplier,
+          ),
           scrollDirection: Axis.horizontal,
           children: [
             AnnouncementCard(
@@ -224,12 +234,15 @@ class RadioGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 82.heightMultiplier,
+      height: 120.heightMultiplier,
       child: FocusTraversalGroup(
         policy: const RecentFocusTraversalPolicy(group: FocusGroup.listRow),
         child: ListView.separated(
+          padding: EdgeInsets.symmetric(
+            horizontal: 20.widthMultiplier,
+            vertical: 20.heightMultiplier,
+          ),
           scrollDirection: Axis.horizontal,
-          padding: padding,
           itemCount: _radioItems.length,
           separatorBuilder: (context, index) => 12.horizontalSpace,
           itemBuilder: (context, index) {

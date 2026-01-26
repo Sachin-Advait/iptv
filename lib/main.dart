@@ -15,7 +15,7 @@ Future<void> main() async {
 
   await GetStorage.init();
   await ScreenUtil.ensureScreenSize();
-
+  // await WakelockPlus.enable();
   getItSetup();
 
   await SystemChrome.setPreferredOrientations([

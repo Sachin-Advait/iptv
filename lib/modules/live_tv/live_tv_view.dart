@@ -7,6 +7,7 @@ import 'package:oman_tv/configs/assets/app_channels.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/home/widget/group_card.dart';
+import 'package:oman_tv/modules/home/widget/vlc_player_page.dart';
 
 class LiveTVView extends StatefulWidget {
   const LiveTVView({super.key});
@@ -67,13 +68,13 @@ class _LiveTVViewState extends State<LiveTVView> implements FocusListener {
             child: CarouselBanner(
               banners: [AppBanner.person02, AppBanner.person08],
               onPlayPressed: () {
-                // Navigator.of(context).push(
-                //   MaterialPageRoute(
-                //     builder: (context) {
-                //       return const VideoScreen();
-                //     },
-                //   ),
-                // );
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return const VideoScreen();
+                    },
+                  ),
+                );
               },
             ),
           ),
@@ -91,9 +92,7 @@ class _LiveTVViewState extends State<LiveTVView> implements FocusListener {
                   ),
                 ),
               ),
-              12.verticalSpace,
               RadioGroup(rowId: 0, items: _group1Items),
-              20.verticalSpace,
               Padding(
                 padding: EdgeInsets.only(left: 20.widthMultiplier),
                 child: Text(
@@ -104,9 +103,7 @@ class _LiveTVViewState extends State<LiveTVView> implements FocusListener {
                   ),
                 ),
               ),
-              12.verticalSpace,
               RadioGroup(rowId: 1, items: _group2Items),
-              20.verticalSpace,
               Padding(
                 padding: EdgeInsets.only(left: 20.widthMultiplier),
                 child: Text(
@@ -117,7 +114,6 @@ class _LiveTVViewState extends State<LiveTVView> implements FocusListener {
                   ),
                 ),
               ),
-              12.verticalSpace,
               RadioGroup(rowId: 2, items: _group3Items),
             ],
           ),
@@ -143,12 +139,15 @@ class RadioGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 82.heightMultiplier,
+      height: 120.heightMultiplier,
       child: FocusTraversalGroup(
         policy: const RecentFocusTraversalPolicy(group: FocusGroup.listRow),
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(
+            horizontal: 20.widthMultiplier,
+            vertical: 20.heightMultiplier,
+          ),
           itemCount: items.length,
           separatorBuilder: (context, index) => 12.horizontalSpace,
           itemBuilder: (context, index) {

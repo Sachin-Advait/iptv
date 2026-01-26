@@ -54,7 +54,21 @@ class Header extends StatelessWidget {
           ),
 
           // ✅ USER IMAGE AS HEADER FOCUS NODE
-          UserProfileButton(columnId: _tabLabels.length),
+          Container(
+            width: 45.widthMultiplier,
+            height: 45.heightMultiplier,
+            margin: EdgeInsets.only(left: 12.widthMultiplier),
+            padding: EdgeInsets.all(6.widthMultiplier),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              // border: _isFocused
+              //     ? Border.all(color: AppColors.primary, width: 3)
+              //     : null,
+            ),
+            child: ClipOval(
+              child: Image.asset(AppImages.user, fit: BoxFit.cover),
+            ),
+          ),
         ],
       ),
     );

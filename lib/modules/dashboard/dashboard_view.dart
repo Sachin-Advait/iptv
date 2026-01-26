@@ -5,7 +5,6 @@ import 'package:oman_tv/modules/catch_up/catch_up_view.dart';
 import 'package:oman_tv/modules/dashboard/widgets/header.dart';
 import 'package:oman_tv/modules/home/home_view.dart';
 import 'package:oman_tv/modules/live_tv/live_tv_view.dart';
-import 'package:oman_tv/modules/profile/profile_view.dart';
 import 'package:oman_tv/modules/radio/radio_view.dart';
 import 'package:oman_tv/modules/vod/vod_view.dart';
 
@@ -54,9 +53,7 @@ class _DashboardViewState extends State<DashboardView>
               userSelected: isUserSelected,
             ),
           ),
-          Expanded(
-            child: isUserSelected ? ProfileView() : page[selectedTabIndex],
-          ),
+          Expanded(child: isUserSelected ? SizedBox() : page[selectedTabIndex]),
         ],
       ),
     );
@@ -66,12 +63,13 @@ class _DashboardViewState extends State<DashboardView>
   void onFocusChanged(FocusGroup group, int row, int column) {
     if (group == FocusGroup.header) {
       setState(() {
-        if (column < page.length) {
-          selectedTabIndex = column;
-          isUserSelected = false;
-        } else {
-          isUserSelected = true;
-        }
+        // if (column < page.length) {
+        //   selectedTabIndex = column;
+        //   isUserSelected = false;
+        // } else {
+        //   isUserSelected = true;
+        // }
+        selectedTabIndex = column;
       });
     }
   }

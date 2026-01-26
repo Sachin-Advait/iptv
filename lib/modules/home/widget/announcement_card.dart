@@ -46,39 +46,56 @@ class _AnnouncementCardState extends State<AnnouncementCard> {
           builder: (context) {
             final isFocused = Focus.of(context).hasFocus;
 
-            return Container(
-              width: 230.widthMultiplier,
-              padding: EdgeInsets.all(20.widthMultiplier),
-              decoration: BoxDecoration(
-                color: isFocused
-                    ? AppColors.beige.withValues(alpha: .6)
-                    : AppColors.lightBeige,
-                borderRadius: BorderRadius.circular(16.radiusMultipier),
-                border: isFocused
-                    ? Border.all(color: AppColors.primary, width: 3)
-                    : null,
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SvgPicture.asset(
-                    widget.icon,
-                    width: 50.widthMultiplier,
-                    height: 50.heightMultiplier,
-                    colorFilter: ColorFilter.mode(
-                      AppColors.beige.withValues(alpha: 0.6),
-                      BlendMode.srcIn,
+            return AnimatedScale(
+              scale: isFocused ? 1.1 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              child: Container(
+                width: 230.widthMultiplier,
+                padding: EdgeInsets.symmetric(vertical: 16.heightMultiplier),
+                margin: EdgeInsets.symmetric(horizontal: 5.widthMultiplier),
+                decoration: BoxDecoration(
+                  color: isFocused ? AppColors.beige : AppColors.lightBeige,
+                  borderRadius: BorderRadius.circular(16.radiusMultipier),
+                  boxShadow: isFocused
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isFocused ? 0.2 : 0.1,
+                            ),
+                            blurRadius: isFocused ? 10 : 8,
+                            offset: Offset(0, isFocused ? 8 : 4),
+                            spreadRadius: isFocused ? 2 : 0,
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedScale(
+                      scale: isFocused ? 1.05 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: SvgPicture.asset(
+                        widget.icon,
+                        width: 50.widthMultiplier,
+                        height: 50.heightMultiplier,
+                        colorFilter: ColorFilter.mode(
+                          AppColors.beige.withValues(alpha: 0.6),
+                          BlendMode.srcIn,
+                        ),
+                      ),
                     ),
-                  ),
-                  Text(
-                    widget.label,
-                    textAlign: TextAlign.center,
-                    style: context.semiBold.copyWith(
-                      fontSize: 14.textMultiplier,
-                      color: AppColors.primary,
+                    Text(
+                      widget.label,
+                      textAlign: TextAlign.center,
+                      style: context.semiBold.copyWith(
+                        fontSize: 14.textMultiplier,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },

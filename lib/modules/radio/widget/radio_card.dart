@@ -5,14 +5,14 @@ import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 
-class RadioCard extends StatefulWidget {
+class RadioCard extends StatelessWidget {
   final int rowId;
   final int columnId;
   final RadioStation station;
   final bool isPlaying;
   final VoidCallback? onTap;
 
-  const RadioCard({
+  RadioCard({
     super.key,
     required this.rowId,
     required this.columnId,
@@ -21,26 +21,21 @@ class RadioCard extends StatefulWidget {
     this.onTap,
   });
 
-  @override
-  State<RadioCard> createState() => _RadioCardState();
-}
-
-class _RadioCardState extends State<RadioCard> {
   final RecentFocusNode _focusNode = RecentFocusNode(group: FocusGroup.listRow);
 
   @override
   Widget build(BuildContext context) {
-    _focusNode.row = widget.rowId;
-    _focusNode.column = widget.columnId;
+    _focusNode.row = rowId;
+    _focusNode.column = columnId;
 
     return GestureDetector(
       onTap: () {
         RecentFocusTraversalPolicy.setFocus(_focusNode, true);
-        widget.onTap?.call();
+        onTap?.call();
       },
       child: Focus(
         focusNode: _focusNode,
-        autofocus: widget.rowId == 1,
+        autofocus: rowId == 1,
         child: Builder(
           builder: (context) {
             final isFocused = Focus.of(context).hasFocus;
@@ -59,14 +54,14 @@ class _RadioCardState extends State<RadioCard> {
               child: Row(
                 children: [
                   Image.asset(
-                    widget.station.imagePath,
+                    station.imagePath,
                     fit: BoxFit.contain,
                     width: 110,
                   ),
                   20.horizontalSpace,
                   Expanded(
                     child: Text(
-                      widget.station.name,
+                      station.name,
                       style: context.semiBold.copyWith(
                         fontSize: 18.textMultiplier,
                         color: AppColors.black,
@@ -82,7 +77,7 @@ class _RadioCardState extends State<RadioCard> {
           if (event is KeyUpEvent &&
               (event.logicalKey == LogicalKeyboardKey.enter ||
                   event.logicalKey == LogicalKeyboardKey.select)) {
-            widget.onTap?.call();
+            onTap?.call();
             return KeyEventResult.handled;
           }
           return KeyEventResult.ignored;
@@ -96,10 +91,12 @@ class RadioStation {
   final String name;
   final String imagePath;
   final String frequency;
+  final String streamUrl; // 👈 add this
 
   RadioStation({
     required this.name,
     required this.imagePath,
     required this.frequency,
+    required this.streamUrl,
   });
 }
