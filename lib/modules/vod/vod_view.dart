@@ -4,7 +4,6 @@ import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/common/widgets/carousel_banner.dart';
 import 'package:oman_tv/configs/assets/app_banner.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
-import 'package:oman_tv/modules/home/widget/vlc_player_page.dart';
 import 'package:oman_tv/modules/vod/widgets/video_card.dart';
 
 class VodView extends StatefulWidget {
@@ -45,13 +44,13 @@ class _VodViewState extends State<VodView> implements FocusListener {
             child: CarouselBanner(
               banners: AppBanner.vodBanners,
               onPlayPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return const VideoScreen();
-                    },
-                  ),
-                );
+                // Navigator.of(context).push(
+                //   MaterialPageRoute(
+                //     builder: (context) {
+                //       return const VideoScreen();
+                //     },
+                //   ),
+                // );
               },
             ),
           ),

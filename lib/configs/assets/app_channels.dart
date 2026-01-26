@@ -8,7 +8,7 @@ class AppChannels {
   static const String jld = 'assets/channels/jld.png';
   static const String mbc = 'assets/channels/mbc.png';
   static const String merge = 'assets/channels/merge.png';
-  static const String omanNews = 'assets/channels/oman_news.png';
+  static const String omanAir = 'assets/channels/oman_news.png';
   static const String pngegg = 'assets/channels/pngegg.png';
   static const String sky = 'assets/channels/sky.png';
   static const String star = 'assets/channels/star.png';

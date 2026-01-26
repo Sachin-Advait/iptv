@@ -62,7 +62,9 @@ class _VideoCardState extends State<VideoCard> {
                   borderRadius: BorderRadius.circular(12.radiusMultipier),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(isFocused ? 0.3 : 0.1),
+                      color: Colors.black.withValues(
+                        alpha: isFocused ? 0.3 : 0.1,
+                      ),
                       blurRadius: isFocused ? 20 : 8,
                       offset: Offset(0, isFocused ? 8 : 4),
                       spreadRadius: isFocused ? 2 : 0,
@@ -103,7 +105,7 @@ class _VideoCardState extends State<VideoCard> {
                           vertical: 3.heightMultiplier,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.9),
+                          color: Colors.black.withValues(alpha: 0.9),
                         ),
                         child: Text(
                           widget.duration,
@@ -122,7 +124,7 @@ class _VideoCardState extends State<VideoCard> {
                         decoration: BoxDecoration(
                           color: isFocused
                               ? AppColors.primary
-                              : AppColors.primary.withOpacity(0.9),
+                              : AppColors.primary.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.only(
                             bottomLeft: Radius.circular(12.radiusMultipier),
                             bottomRight: Radius.circular(12.radiusMultipier),
@@ -149,7 +151,7 @@ class _VideoCardState extends State<VideoCard> {
                               widget.description,
                               style: context.regular.copyWith(
                                 fontSize: 9.textMultiplier,
-                                color: AppColors.white.withOpacity(0.9),
+                                color: AppColors.white.withValues(alpha: 0.9),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

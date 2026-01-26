@@ -7,7 +7,6 @@ import 'package:oman_tv/configs/assets/app_channels.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/home/widget/group_card.dart';
-import 'package:oman_tv/modules/home/widget/vlc_player_page.dart';
 
 class LiveTVView extends StatefulWidget {
   const LiveTVView({super.key});
@@ -44,7 +43,7 @@ class _LiveTVViewState extends State<LiveTVView> implements FocusListener {
   ];
 
   List<RadioItem> get _group2Items => [
-    RadioItem(imagePath: AppChannels.omanNews),
+    RadioItem(imagePath: AppChannels.omanAir),
     RadioItem(imagePath: AppChannels.channel1),
     RadioItem(imagePath: AppChannels.pngegg),
     RadioItem(imagePath: AppChannels.ubc2),
@@ -68,13 +67,13 @@ class _LiveTVViewState extends State<LiveTVView> implements FocusListener {
             child: CarouselBanner(
               banners: [AppBanner.person02, AppBanner.person08],
               onPlayPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return const VideoScreen();
-                    },
-                  ),
-                );
+                // Navigator.of(context).push(
+                //   MaterialPageRoute(
+                //     builder: (context) {
+                //       return const VideoScreen();
+                //     },
+                //   ),
+                // );
               },
             ),
           ),

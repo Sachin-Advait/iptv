@@ -140,10 +140,10 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
     }
 
     if (buttons.isNotEmpty) {
-      debugPrint('FOCUSING BUTTON');
       setFocus(buttons.first, true);
     } else {
-      debugPrint('❌ NO BUTTON FOUND');
+      debugPrint('NO BUTTON → FALLBACK TO HEADER');
+      moveToHeader();
     }
   }
 
@@ -186,6 +186,8 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
           }
           break;
         case TraversalDirection.up:
+          debugPrint('-----------------_SACHIN');
+          moveToHeader(); // go to tabs
           break;
         case TraversalDirection.down:
           // 1) Try button first
@@ -206,6 +208,7 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
     } else if (group == FocusGroup.button) {
       switch (direction) {
         case TraversalDirection.up:
+          debugPrint('-----------------_SACHIN');
           debugPrint('BUTTON ↑ → HEADER');
           moveToHeader(); // go to tabs
           break;
@@ -238,6 +241,7 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
           }
           break;
         case TraversalDirection.up:
+          debugPrint('-----------------_SACHIN');
           debugPrint('--- UP PRESSED ---');
           debugPrint(
             'CurrentNode: '
@@ -388,6 +392,7 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
 
     switch (direction) {
       case TraversalDirection.up:
+        debugPrint('-----------------_SACHIN');
         candidates = candidates
             .where((n) => n.rect.bottom < node.rect.top)
             .sorted(_descendingOrderByVertical)

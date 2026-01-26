@@ -9,7 +9,7 @@ class AppImages {
   static const String internal = 'assets/images/internal.svg';
 
   // Media / Channels
-  static const String fm = 'assets/images/fm.svg';
+  static const String fm = 'assets/images/fm.png';
   static const String news = 'assets/images/news.svg';
   static const String sports = 'assets/images/sports.svg';
   static const String ramadan = 'assets/images/ramadan.svg';

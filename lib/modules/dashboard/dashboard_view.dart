@@ -5,6 +5,7 @@ import 'package:oman_tv/modules/catch_up/catch_up_view.dart';
 import 'package:oman_tv/modules/dashboard/widgets/header.dart';
 import 'package:oman_tv/modules/home/home_view.dart';
 import 'package:oman_tv/modules/live_tv/live_tv_view.dart';
+import 'package:oman_tv/modules/profile/profile_view.dart';
 import 'package:oman_tv/modules/radio/radio_view.dart';
 import 'package:oman_tv/modules/vod/vod_view.dart';
 
@@ -48,12 +49,13 @@ class _DashboardViewState extends State<DashboardView>
         children: <Widget>[
           FocusTraversalGroup(
             policy: const RecentFocusTraversalPolicy(group: FocusGroup.header),
-            child: Header(currentIndex: selectedTabIndex),
+            child: Header(
+              currentIndex: selectedTabIndex,
+              userSelected: isUserSelected,
+            ),
           ),
           Expanded(
-            child: isUserSelected
-                ? const SizedBox() // or ProfileMenuView()
-                : page[selectedTabIndex],
+            child: isUserSelected ? ProfileView() : page[selectedTabIndex],
           ),
         ],
       ),
@@ -65,11 +67,9 @@ class _DashboardViewState extends State<DashboardView>
     if (group == FocusGroup.header) {
       setState(() {
         if (column < page.length) {
-          // normal tabs
           selectedTabIndex = column;
           isUserSelected = false;
         } else {
-          // user icon
           isUserSelected = true;
         }
       });

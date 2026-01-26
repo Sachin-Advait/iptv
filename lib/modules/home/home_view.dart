@@ -10,7 +10,6 @@ import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/home/widget/announcement_card.dart';
 import 'package:oman_tv/modules/home/widget/category_card.dart';
 import 'package:oman_tv/modules/home/widget/group_card.dart';
-import 'package:oman_tv/modules/home/widget/vlc_player_page.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -50,13 +49,13 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
             child: CarouselBanner(
               banners: AppBanner.homeBanners,
               onPlayPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return const VideoScreen();
-                    },
-                  ),
-                );
+                // Navigator.of(context).push(
+                //   MaterialPageRoute(
+                //     builder: (context) {
+                //       return const VideoScreen();
+                //     },
+                //   ),
+                // );
               },
             ),
           ),
@@ -216,10 +215,10 @@ class RadioGroup extends StatelessWidget {
 
   List<RadioItem> get _radioItems => [
     RadioItem(imagePath: AppChannels.ubc),
-    RadioItem(imagePath: AppChannels.omanNews),
+    RadioItem(imagePath: AppChannels.omanAir),
     RadioItem(imagePath: AppChannels.merge),
     RadioItem(imagePath: AppChannels.jld),
-    RadioItem(imagePath: AppChannels.omanNews),
+    RadioItem(imagePath: AppChannels.omanAir),
   ];
 
   @override

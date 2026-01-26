@@ -9,8 +9,13 @@ import 'package:oman_tv/modules/dashboard/widgets/custom_tab.dart';
 
 class Header extends StatelessWidget {
   final int currentIndex;
+  final bool userSelected;
 
-  const Header({super.key, required this.currentIndex});
+  const Header({
+    super.key,
+    required this.currentIndex,
+    required this.userSelected,
+  });
 
   static const List<String> _tabLabels = [
     'Home',
@@ -42,6 +47,7 @@ class Header extends StatelessWidget {
                   id: index,
                   label: _tabLabels[index],
                   isSelected: currentIndex == index,
+                  userSelected: userSelected,
                 );
               }),
             ),

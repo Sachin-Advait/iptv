@@ -9,12 +9,14 @@ class CustomTab extends StatefulWidget {
   final int id;
   final String label;
   final bool isSelected;
+  final bool userSelected;
 
   const CustomTab({
     super.key,
     required this.id,
     required this.label,
     required this.isSelected,
+    required this.userSelected,
   });
 
   @override
@@ -33,7 +35,7 @@ class _CustomTabState extends State<CustomTab> {
     final bool isFocused = _isFocused;
 
     final bool isSelected = widget.isSelected;
-    final bool showSelected = isSelected && !isFocused;
+    final bool showSelected = isSelected && !isFocused && !widget.userSelected;
 
     return GestureDetector(
       onTap: () {
