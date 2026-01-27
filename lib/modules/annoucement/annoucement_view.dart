@@ -11,7 +11,10 @@ class AnnouncementView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Padding(
-        padding: EdgeInsets.all(20.widthMultiplier),
+        padding: EdgeInsets.symmetric(
+          horizontal: 20.widthMultiplier,
+          vertical: 10.widthMultiplier,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -46,7 +49,7 @@ class AnnouncementView extends StatelessWidget {
               color: const Color(0xFF6B5D4F),
             ),
           ),
-          22.verticalSpace,
+          15.verticalSpace,
           _buildMeetingRoomCard(
             context,
             roomName: 'Conference A',
@@ -54,7 +57,7 @@ class AnnouncementView extends StatelessWidget {
             statusColor: const Color(0xFF4CAF50),
             isFree: true,
           ),
-          16.verticalSpace,
+          10.verticalSpace,
           _buildMeetingRoomCard(
             context,
             roomName: 'Conference B',
@@ -64,7 +67,7 @@ class AnnouncementView extends StatelessWidget {
             time: '10:00 - 11:30',
             meeting: 'HR Monthly Review',
           ),
-          16.verticalSpace,
+          10.verticalSpace,
           _buildMeetingRoomCard(
             context,
             roomName: 'Conference C',
@@ -146,13 +149,17 @@ class AnnouncementView extends StatelessWidget {
 
   Widget _buildNowServingSection(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(24.widthMultiplier),
+      padding: EdgeInsets.fromLTRB(
+        24.widthMultiplier,
+        24.widthMultiplier,
+        24.widthMultiplier,
+        0,
+      ),
       decoration: BoxDecoration(
         color: AppColors.lightBeige.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(20.radiusMultipier),
       ),
       child: ListView(
-        shrinkWrap: true,
         children: [
           Text(
             'Now Serving',
@@ -161,28 +168,28 @@ class AnnouncementView extends StatelessWidget {
               color: const Color(0xFF6B5D4F),
             ),
           ),
-          22.verticalSpace,
+          15.verticalSpace,
           _buildCounterCard(
             context,
             counterName: 'Counter 1',
             tokenNumber: 'A-042',
             isVIP: false,
           ),
-          16.verticalSpace,
+          10.verticalSpace,
           _buildCounterCard(
             context,
             counterName: 'Counter 2',
             tokenNumber: 'B-017',
             isVIP: false,
           ),
-          16.verticalSpace,
+          10.verticalSpace,
           _buildCounterCard(
             context,
             counterName: 'Counter 3',
             tokenNumber: 'VIP-003',
             isVIP: true,
           ),
-          15.verticalSpace,
+          10.verticalSpace,
           Text(
             'Waiting In Queue',
             style: context.bold.copyWith(
@@ -286,7 +293,7 @@ class AnnouncementView extends StatelessWidget {
   }) {
     return Container(
       padding: EdgeInsets.symmetric(
-        vertical: 16.heightMultiplier,
+        vertical: 4.heightMultiplier,
         horizontal: 12.widthMultiplier,
       ),
       decoration: BoxDecoration(
@@ -349,19 +356,19 @@ class AnnouncementView extends StatelessWidget {
               color: const Color(0xFF6B5D4F),
             ),
           ),
-          22.verticalSpace,
+          15.verticalSpace,
           _buildAnnouncementCard(
             context,
             title: 'Ramadan Working Hours',
             subtitle: '09:00 AM - 02:00PM',
           ),
-          16.verticalSpace,
+          10.verticalSpace,
           _buildAnnouncementCard(
             context,
             title: 'Public Holiday',
             subtitle: 'Thursday, 21 March',
           ),
-          16.verticalSpace,
+          10.verticalSpace,
           _buildAnnouncementCard(
             context,
             title: 'System Maintenance',

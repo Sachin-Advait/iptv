@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:oman_tv/common/utils/app_screen_util.dart';
 import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/configs/assets/app_images.dart';
@@ -37,7 +36,8 @@ class Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SvgPicture.asset(AppImages.logo, height: 25.heightMultiplier),
+          // SvgPicture.asset(AppImages.logo, height: 25.heightMultiplier),
+          Image.asset(AppImages.logoPng, height: 25.heightMultiplier),
 
           Expanded(
             child: Row(

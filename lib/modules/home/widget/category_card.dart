@@ -13,6 +13,10 @@ class CategoryCard extends StatefulWidget {
   final String label;
   final VoidCallback onTap;
 
+  // 🔥 New
+  final bool isHeaderStyle;
+  final bool isSelected;
+
   const CategoryCard({
     super.key,
     required this.rowId,
@@ -20,6 +24,8 @@ class CategoryCard extends StatefulWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.isHeaderStyle = false,
+    this.isSelected = false,
   });
 
   @override
@@ -27,7 +33,27 @@ class CategoryCard extends StatefulWidget {
 }
 
 class _CategoryCardState extends State<CategoryCard> {
-  final RecentFocusNode _focusNode = RecentFocusNode(group: FocusGroup.listRow);
+  late RecentFocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = RecentFocusNode(
+      group: widget.isHeaderStyle ? FocusGroup.header : FocusGroup.listRow,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant CategoryCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 🔁 Update focus group dynamically when mode changes
+    if (oldWidget.isHeaderStyle != widget.isHeaderStyle) {
+      _focusNode.group = widget.isHeaderStyle
+          ? FocusGroup.liveHeader
+          : FocusGroup.listRow;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,45 +67,78 @@ class _CategoryCardState extends State<CategoryCard> {
       },
       child: Focus(
         focusNode: _focusNode,
-        autofocus: widget.rowId == 0 && widget.columnId == 0,
+        autofocus: widget.isHeaderStyle && widget.columnId == 0,
         child: Builder(
           builder: (context) {
             final isFocused = Focus.of(context).hasFocus;
+            final bool showHeaderSelected =
+                widget.isHeaderStyle && widget.isSelected && !isFocused;
 
             return AnimatedScale(
-              scale: isFocused ? 1.2 : 1.0,
-              duration: const Duration(milliseconds: 200),
+              scale: isFocused ? 1.1 : 1.0,
+              duration: const Duration(milliseconds: 180),
               curve: Curves.easeOut,
               child: Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: isFocused
-                      ? 12.widthMultiplier
-                      : 8.widthMultiplier,
-                ),
+                margin: EdgeInsets.symmetric(horizontal: 8.widthMultiplier),
                 alignment: Alignment.center,
-                width: 230.widthMultiplier,
-                padding: EdgeInsets.symmetric(vertical: 16.heightMultiplier),
+                width: widget.isHeaderStyle
+                    ? 160.widthMultiplier
+                    : 230.widthMultiplier,
+                padding: EdgeInsets.symmetric(
+                  vertical: widget.isHeaderStyle
+                      ? 10.heightMultiplier
+                      : 16.heightMultiplier,
+                  horizontal: widget.isHeaderStyle ? 20.heightMultiplier : 0,
+                ),
                 decoration: BoxDecoration(
-                  color: isFocused ? AppColors.primary : AppColors.beige,
-                  borderRadius: BorderRadius.circular(16.radiusMultipier),
-                  boxShadow: isFocused
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.4),
-                            blurRadius: 6,
-                            offset: Offset(2, 2),
-                            spreadRadius: 2,
-                          ),
-                        ]
+                  // 🎯 HEADER MODE STYLE
+                  gradient: widget.isHeaderStyle
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: isFocused || showHeaderSelected
+                              ? [AppColors.bg, AppColors.beige]
+                              : [Colors.transparent, Colors.transparent],
+                        )
                       : null,
+
+                  // 🎯 ROW MODE STYLE
+                  color: widget.isHeaderStyle
+                      ? AppColors.beige
+                      : (isFocused ? AppColors.primary : AppColors.beige),
+
+                  borderRadius: BorderRadius.circular(
+                    widget.isHeaderStyle
+                        ? 10.radiusMultipier
+                        : 16.radiusMultipier,
+                  ),
+
+                  boxShadow: widget.isHeaderStyle
+                      ? (isFocused
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primary,
+                                  offset: const Offset(0, 3),
+                                  blurRadius: 0,
+                                ),
+                              ]
+                            : null)
+                      : (isFocused
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  blurRadius: 6,
+                                  offset: const Offset(2, 2),
+                                  spreadRadius: 2,
+                                ),
+                              ]
+                            : null),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    AnimatedScale(
-                      scale: isFocused ? 1.1 : 1.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: SvgPicture.asset(
+                    if (!widget.isHeaderStyle) ...[
+                      SvgPicture.asset(
                         widget.icon,
                         width: 40.widthMultiplier,
                         height: 40.heightMultiplier,
@@ -88,13 +147,22 @@ class _CategoryCardState extends State<CategoryCard> {
                           BlendMode.srcIn,
                         ),
                       ),
-                    ),
-                    25.horizontalSpace,
+                      20.horizontalSpace,
+                    ],
                     Text(
                       widget.label,
                       style: context.semiBold.copyWith(
-                        fontSize: 20.textMultiplier,
-                        color: AppColors.white,
+                        fontSize: widget.isHeaderStyle
+                            ? 16.textMultiplier
+                            : 20.textMultiplier,
+                        color: widget.isHeaderStyle
+                            ? (isFocused || showHeaderSelected
+                                  ? AppColors.primary
+                                  : AppColors.black)
+                            : AppColors.white,
+                        fontWeight: isFocused || showHeaderSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                       ),
                     ),
                   ],

@@ -17,10 +17,10 @@ class FocusListener {
   void onFocusChanged(FocusGroup group, int row, int column) {}
 }
 
-enum FocusGroup { root, header, button, listRow }
+enum FocusGroup { root, header, button, listRow, liveHeader }
 
 class RecentFocusNode extends FocusNode implements Comparable<RecentFocusNode> {
-  final FocusGroup group;
+  FocusGroup group;
   static RecentFocusNode? root;
 
   int visited = -1;
@@ -205,6 +205,64 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
           }
           break;
       }
+    } else if (group == FocusGroup.liveHeader) {
+      switch (direction) {
+        case TraversalDirection.left:
+          _moveToAdjacentNode(currentNode, nodes.toList(), -1);
+          break;
+
+        case TraversalDirection.right:
+          _moveToAdjacentNode(currentNode, nodes.toList(), 1);
+          break;
+
+        case TraversalDirection.up:
+          // 🔥 go to button first
+          final buttons = RecentFocusNode.root?.descendants
+              .whereType<RecentFocusNode>()
+              .where((n) => n.group == FocusGroup.button)
+              .toList();
+
+          if (buttons != null && buttons.isNotEmpty) {
+            buttons.sort((a, b) => a.row.compareTo(b.row));
+            debugPrint('LIVE HEADER ↑ → BUTTON');
+            setFocus(buttons.last, true); // nearest button
+          } else {
+            // fallback to header
+            final headers = RecentFocusNode.root?.descendants
+                .whereType<RecentFocusNode>()
+                .where((n) => n.group == FocusGroup.header)
+                .toList();
+
+            if (headers != null && headers.isNotEmpty) {
+              headers.sort((a, b) => a.column.compareTo(b.column));
+              debugPrint('LIVE HEADER ↑ → HEADER');
+              setFocus(headers.first, true);
+            }
+          }
+          break;
+
+        case TraversalDirection.down:
+          // Go to the FIRST listRow below liveHeader
+          final listRows = RecentFocusNode.root?.descendants
+              .whereType<RecentFocusNode>()
+              .where((n) => n.group == FocusGroup.listRow)
+              .toList();
+
+          if (listRows == null || listRows.isEmpty) return true;
+
+          // Sort by row (top → bottom)
+          listRows.sort((a, b) => a.row.compareTo(b.row));
+
+          // pick smallest row > liveHeader row
+          final liveRow = (currentNode as RecentFocusNode).row;
+
+          final target =
+              listRows.firstWhereOrNull((n) => n.row > liveRow) ??
+              listRows.first;
+
+          setFocus(target, true);
+          break;
+      }
     } else if (group == FocusGroup.button) {
       final buttons = RecentFocusNode.root?.descendants
           .whereType<RecentFocusNode>()
@@ -256,10 +314,22 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
         case TraversalDirection.down:
           if (index < buttons.length - 1) {
             debugPrint('BUTTON ↓ → BUTTON');
-            setFocus(buttons[index + 1], true); // button to button
+            setFocus(buttons[index + 1], true);
           } else {
-            debugPrint('BOTTOM BUTTON ↓ → LIST ROW');
-            moveToListRow(); // bottom → list
+            // 🔥 check liveHeader first
+            final liveHeaders = RecentFocusNode.root?.descendants
+                .whereType<RecentFocusNode>()
+                .where((n) => n.group == FocusGroup.liveHeader)
+                .toList();
+
+            if (liveHeaders != null && liveHeaders.isNotEmpty) {
+              liveHeaders.sort((a, b) => a.row.compareTo(b.row));
+              debugPrint('BUTTON ↓ → LIVE HEADER');
+              setFocus(liveHeaders.first, true);
+            } else {
+              debugPrint('BUTTON ↓ → LIST ROW');
+              moveToListRow();
+            }
           }
           break;
 
@@ -287,48 +357,80 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
         case TraversalDirection.up:
           debugPrint('-----------------_SACHIN');
           debugPrint('--- UP PRESSED ---');
-          debugPrint(
-            'CurrentNode: '
-            'row=${currentNode is RecentFocusNode ? currentNode.row : "?"}, '
-            'col=${currentNode is RecentFocusNode ? currentNode.column : "?"}',
-          );
 
-          debugPrint('Nodes in this group (current row children):');
-          for (var n in nodes) {
-            if (n is RecentFocusNode) {
-              debugPrint('  node -> row=${n.row}, col=${n.column}');
-            } else {
-              debugPrint('  node -> not RecentFocusNode');
+          final node = currentNode as RecentFocusNode;
+
+          /* =========================================
+     1️⃣ NORMAL LISTROW MOVE FIRST
+     ========================================= */
+
+          final listRows = RecentFocusNode.root?.descendants
+              .whereType<RecentFocusNode>()
+              .where((n) => n.group == FocusGroup.listRow)
+              .toList();
+
+          if (listRows != null && listRows.isNotEmpty) {
+            // rows above current
+            final rowsAbove = listRows.where((n) => n.row < node.row).toList();
+
+            if (rowsAbove.isNotEmpty) {
+              // nearest row above
+              rowsAbove.sort((a, b) => b.row.compareTo(a.row));
+              final targetRow = rowsAbove.first.row;
+
+              final sameRowNodes = listRows
+                  .where((n) => n.row == targetRow)
+                  .toList();
+
+              sameRowNodes.sort((a, b) => a.column.compareTo(b.column));
+
+              debugPrint('LIST ↑ → LISTROW $targetRow');
+              setFocus(sameRowNodes.first, true);
+              break; // ✅ STOP HERE
             }
           }
 
-          debugPrint(
-            'nodes.first == currentNode => ${nodes.first == currentNode}',
-          );
-          debugPrint(
-            'currentNode.row == 0 => ${currentNode is RecentFocusNode ? currentNode.row == 0 : "?"}',
-          );
+          /* =========================================
+     2️⃣ LIVE HEADER (ONLY IF NO LISTROW ABOVE)
+     ========================================= */
 
-          if (currentNode is RecentFocusNode && currentNode.row == 0) {
-            debugPrint('DECISION: moveToButtonsOrHeader()  [row==0]');
+          final liveHeaders = RecentFocusNode.root?.descendants
+              .whereType<RecentFocusNode>()
+              .where((n) => n.group == FocusGroup.liveHeader)
+              .toList();
 
+          if (liveHeaders != null && liveHeaders.isNotEmpty) {
+            final candidates = liveHeaders
+                .where((n) => n.rect.bottom <= node.rect.top)
+                .toList();
+
+            if (candidates.isNotEmpty) {
+              candidates.sort((a, b) => b.rect.top.compareTo(a.rect.top));
+              debugPrint('LIST ↑ → LIVE HEADER');
+              setFocus(candidates.first, true);
+              break;
+            }
+          }
+
+          /* =========================================
+     3️⃣ ORIGINAL ROOT BEHAVIOR
+     ========================================= */
+
+          if (node.row == 0) {
             final buttons = RecentFocusNode.root?.descendants
                 .whereType<RecentFocusNode>()
                 .where((n) => n.group == FocusGroup.button)
                 .toList();
 
             if (buttons != null && buttons.isNotEmpty) {
-              // Sort top → bottom
               buttons.sort((a, b) => a.row.compareTo(b.row));
-
               debugPrint('LIST ↑ → BOTTOM BUTTON');
-              setFocus(buttons.last, true); // 🔥 go to PLAY button (bottom one)
+              setFocus(buttons.last, true);
             } else {
               debugPrint('LIST ↑ → HEADER');
               moveToHeader();
             }
           } else {
-            debugPrint('DECISION: _moveToNextListRow()  [row>0]');
             _moveToNextListRow(currentNode, -1);
           }
 
