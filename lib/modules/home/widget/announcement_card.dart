@@ -47,25 +47,27 @@ class _AnnouncementCardState extends State<AnnouncementCard> {
             final isFocused = Focus.of(context).hasFocus;
 
             return AnimatedScale(
-              scale: isFocused ? 1.1 : 1.0,
+              scale: isFocused ? 1.2 : 1.0,
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
               child: Container(
                 width: 230.widthMultiplier,
                 padding: EdgeInsets.symmetric(vertical: 16.heightMultiplier),
-                margin: EdgeInsets.symmetric(horizontal: 5.widthMultiplier),
+                margin: EdgeInsets.symmetric(
+                  horizontal: isFocused
+                      ? 12.widthMultiplier
+                      : 8.widthMultiplier,
+                ),
                 decoration: BoxDecoration(
                   color: isFocused ? AppColors.beige : AppColors.lightBeige,
                   borderRadius: BorderRadius.circular(16.radiusMultipier),
                   boxShadow: isFocused
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(
-                              alpha: isFocused ? 0.2 : 0.1,
-                            ),
-                            blurRadius: isFocused ? 10 : 8,
-                            offset: Offset(0, isFocused ? 8 : 4),
-                            spreadRadius: isFocused ? 2 : 0,
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 6,
+                            offset: Offset(2, 2),
+                            spreadRadius: 2,
                           ),
                         ]
                       : [],
@@ -81,7 +83,7 @@ class _AnnouncementCardState extends State<AnnouncementCard> {
                         width: 50.widthMultiplier,
                         height: 50.heightMultiplier,
                         colorFilter: ColorFilter.mode(
-                          AppColors.beige.withValues(alpha: 0.6),
+                          AppColors.primary.withValues(alpha: .6),
                           BlendMode.srcIn,
                         ),
                       ),
@@ -90,8 +92,8 @@ class _AnnouncementCardState extends State<AnnouncementCard> {
                       widget.label,
                       textAlign: TextAlign.center,
                       style: context.semiBold.copyWith(
-                        fontSize: 14.textMultiplier,
-                        color: AppColors.primary,
+                        fontSize: 16.textMultiplier,
+                        color: AppColors.brownDeep,
                       ),
                     ),
                   ],

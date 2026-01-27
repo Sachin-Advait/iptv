@@ -99,7 +99,7 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
               AnnouncementSection(rowId: 2),
             ],
           ),
-          30.verticalSpace,
+          10.verticalSpace,
         ],
       ),
     );

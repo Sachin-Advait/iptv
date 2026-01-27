@@ -46,7 +46,7 @@ class AnnouncementView extends StatelessWidget {
               color: const Color(0xFF6B5D4F),
             ),
           ),
-          32.verticalSpace,
+          22.verticalSpace,
           _buildMeetingRoomCard(
             context,
             roomName: 'Conference A',
@@ -87,7 +87,7 @@ class AnnouncementView extends StatelessWidget {
     String? meeting,
   }) {
     return Container(
-      padding: EdgeInsets.all(20.widthMultiplier),
+      padding: EdgeInsets.all(16.widthMultiplier),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16.radiusMultipier),
@@ -161,7 +161,7 @@ class AnnouncementView extends StatelessWidget {
               color: const Color(0xFF6B5D4F),
             ),
           ),
-          32.verticalSpace,
+          22.verticalSpace,
           _buildCounterCard(
             context,
             counterName: 'Counter 1',
@@ -233,7 +233,7 @@ class AnnouncementView extends StatelessWidget {
     required bool isVIP,
   }) {
     return Container(
-      padding: EdgeInsets.all(20.widthMultiplier),
+      padding: EdgeInsets.all(16.widthMultiplier),
       decoration: BoxDecoration(
         gradient: isVIP
             ? const LinearGradient(
@@ -349,7 +349,7 @@ class AnnouncementView extends StatelessWidget {
               color: const Color(0xFF6B5D4F),
             ),
           ),
-          32.verticalSpace,
+          22.verticalSpace,
           _buildAnnouncementCard(
             context,
             title: 'Ramadan Working Hours',
@@ -401,7 +401,7 @@ class AnnouncementView extends StatelessWidget {
               color: AppColors.black,
             ),
           ),
-          8.verticalSpace,
+          2.verticalSpace,
           Text(
             subtitle,
             style: context.regular.copyWith(

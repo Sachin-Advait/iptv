@@ -4,11 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:oman_tv/common/constants/app_strings.dart';
 import 'package:oman_tv/common/utils/app_screen_util.dart';
-import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
-import 'package:oman_tv/modules/dashboard/dashboard_view.dart';
+import 'package:oman_tv/modules/splash/view/splash_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,8 +41,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final _focusNode = RecentFocusNode(group: FocusGroup.root);
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -68,13 +65,7 @@ class _MyAppState extends State<MyApp> {
               theme: AppThemes.lightTheme,
               home: WillPopScope(
                 onWillPop: _willPopCallback,
-                child: Scaffold(
-                  body: Focus(
-                    focusNode: _focusNode,
-                    descendantsAreFocusable: true,
-                    child: const DashboardView(),
-                  ),
-                ),
+                child: Scaffold(body: const SplashView()),
               ),
             ),
           );

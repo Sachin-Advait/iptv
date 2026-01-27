@@ -13,4 +13,4 @@ sealed class SplashActionState extends SplashState {}
 
 final class NavigateToHomeActionState extends SplashActionState {}
 
-final class NavigateToLoginActionState extends SplashActionState {}
+// final class NavigateToLoginActionState extends SplashActionState {}

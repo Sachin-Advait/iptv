@@ -47,27 +47,31 @@ class _CategoryCardState extends State<CategoryCard> {
             final isFocused = Focus.of(context).hasFocus;
 
             return AnimatedScale(
-              scale: isFocused ? 1.1 : 1.0,
+              scale: isFocused ? 1.2 : 1.0,
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
               child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 5.widthMultiplier),
+                margin: EdgeInsets.symmetric(
+                  horizontal: isFocused
+                      ? 12.widthMultiplier
+                      : 8.widthMultiplier,
+                ),
                 alignment: Alignment.center,
                 width: 230.widthMultiplier,
                 padding: EdgeInsets.symmetric(vertical: 16.heightMultiplier),
                 decoration: BoxDecoration(
                   color: isFocused ? AppColors.primary : AppColors.beige,
                   borderRadius: BorderRadius.circular(16.radiusMultipier),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isFocused ? 0.2 : 0.1,
-                      ),
-                      blurRadius: isFocused ? 10 : 8,
-                      offset: Offset(0, isFocused ? 8 : 4),
-                      spreadRadius: isFocused ? 2 : 0,
-                    ),
-                  ],
+                  boxShadow: isFocused
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            blurRadius: 6,
+                            offset: Offset(2, 2),
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,

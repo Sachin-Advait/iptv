@@ -3,6 +3,7 @@ import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/modules/annoucement/annoucement_view.dart';
 import 'package:oman_tv/modules/catch_up/catch_up_view.dart';
 import 'package:oman_tv/modules/dashboard/widgets/header.dart';
+import 'package:oman_tv/modules/dashboard/widgets/ticker_state.dart';
 import 'package:oman_tv/modules/home/home_view.dart';
 import 'package:oman_tv/modules/live_tv/live_tv_view.dart';
 import 'package:oman_tv/modules/radio/radio_view.dart';
@@ -17,6 +18,8 @@ class DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<DashboardView>
     implements FocusListener {
+  final _focusNode = RecentFocusNode(group: FocusGroup.root);
+
   List page = [
     const HomeView(),
     const LiveTVView(),
@@ -44,17 +47,26 @@ class _DashboardViewState extends State<DashboardView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: <Widget>[
-          FocusTraversalGroup(
-            policy: const RecentFocusTraversalPolicy(group: FocusGroup.header),
-            child: Header(
-              currentIndex: selectedTabIndex,
-              userSelected: isUserSelected,
+      body: Focus(
+        focusNode: _focusNode,
+        descendantsAreFocusable: true,
+        child: Column(
+          children: <Widget>[
+            FocusTraversalGroup(
+              policy: const RecentFocusTraversalPolicy(
+                group: FocusGroup.header,
+              ),
+              child: Header(
+                currentIndex: selectedTabIndex,
+                userSelected: isUserSelected,
+              ),
             ),
-          ),
-          Expanded(child: isUserSelected ? SizedBox() : page[selectedTabIndex]),
-        ],
+            Expanded(
+              child: isUserSelected ? SizedBox() : page[selectedTabIndex],
+            ),
+            NewsTicker(),
+          ],
+        ),
       ),
     );
   }
