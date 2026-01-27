@@ -1,7 +1,7 @@
 class AppImages {
   // Logos
   static const String logo = 'assets/images/logo.svg';
-  static const String logoPng = 'assets/images/logo.png';
+  static const String logoPng = 'assets/images/splash_logo.png';
   static const String splashLogo = 'assets/images/splash_logo.svg';
   static const String logoBanner = 'assets/images/logo_banner.png';
 

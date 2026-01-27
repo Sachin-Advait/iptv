@@ -52,14 +52,14 @@ class _VideoCardState extends State<VideoCard> {
             final isFocused = Focus.of(context).hasFocus;
 
             return AnimatedScale(
-              scale: isFocused ? 1.1 : 1.0,
+              scale: isFocused ? 1.1 : .98,
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: isFocused ? 10 : 0),
                 width: 300.widthMultiplier,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.radiusMultipier),
+                  borderRadius: BorderRadius.circular(15.radiusMultipier),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(
@@ -74,7 +74,7 @@ class _VideoCardState extends State<VideoCard> {
                 child: Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12.radiusMultipier),
+                      borderRadius: BorderRadius.circular(15.radiusMultipier),
                       child: Image.asset(
                         widget.imageUrl,
                         width: double.infinity,

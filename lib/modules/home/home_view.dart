@@ -90,7 +90,6 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
                   });
                 },
               ),
-
               if (_liveTvHeaderMode) ...[
                 10.verticalSpace,
                 Padding(
@@ -250,8 +249,7 @@ class LiveTVGroup extends StatelessWidget {
       label: label,
       isHeaderStyle: isHeaderMode,
       isSelected: isSelected,
-      // onTap: () => onCategorySelected?.call(index, label),
-      onTap: () {},
+      onTap: () => onCategorySelected?.call(index, label),
     );
   }
 

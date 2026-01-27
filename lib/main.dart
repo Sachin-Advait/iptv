@@ -5,9 +5,10 @@ import 'package:get_storage/get_storage.dart';
 import 'package:oman_tv/common/constants/app_strings.dart';
 import 'package:oman_tv/common/utils/app_screen_util.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
+import 'package:oman_tv/common/utils/global_keys.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
-import 'package:oman_tv/modules/splash/view/splash_view.dart';
+import 'package:oman_tv/routes/app_pages.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,22 +60,16 @@ class _MyAppState extends State<MyApp> {
               context,
             ).copyWith(textScaler: TextScaler.linear(isTablet ? 1.2 : 1.0)),
             child: MaterialApp(
-              // routerConfig: Pages.appRouter,
+              initialRoute: Routes.splash,
+              navigatorKey: GlobalKeys.navigatorKey,
+              onGenerateRoute: Pages.onGenerateRoute,
               title: AppStrings.appTitle,
               debugShowCheckedModeBanner: false,
               theme: AppThemes.lightTheme,
-              home: WillPopScope(
-                onWillPop: _willPopCallback,
-                child: Scaffold(body: const SplashView()),
-              ),
             ),
           );
         },
       ),
     );
   }
-}
-
-Future<bool> _willPopCallback() async {
-  return false;
 }

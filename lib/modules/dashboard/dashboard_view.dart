@@ -28,7 +28,7 @@ class _DashboardViewState extends State<DashboardView>
     const RadioView(),
     const AnnouncementView(),
   ];
-  int column = 0;
+
   int selectedTabIndex = 0;
   bool isUserSelected = false;
 
