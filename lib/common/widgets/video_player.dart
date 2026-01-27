@@ -2,22 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_multicast_lock/flutter_multicast_lock.dart';
 import 'package:flutter_vlc_player_16kb/flutter_vlc_player.dart';
 
-class Channel {
-  final String name;
-  final String url;
-  final String? logoUrl;
-  const Channel({required this.name, required this.url, this.logoUrl});
-}
-
-class PlayerPage extends StatefulWidget {
-  final Channel channel;
-  const PlayerPage({super.key, required this.channel});
+class VideoView extends StatefulWidget {
+  final String videoUrl;
+  const VideoView({super.key, required this.videoUrl});
 
   @override
-  State<PlayerPage> createState() => _PlayerPageState();
+  State<VideoView> createState() => _VideoViewState();
 }
 
-class _PlayerPageState extends State<PlayerPage> {
+class _VideoViewState extends State<VideoView> {
   VlcPlayerController? _controller;
   final _multicastLock = FlutterMulticastLock();
   bool _multicastLockHeld = false;
@@ -34,7 +27,7 @@ class _PlayerPageState extends State<PlayerPage> {
   }
 
   Future<void> _startPlayback() async {
-    final url = widget.channel.url.trim();
+    final url = widget.videoUrl.trim();
 
     // Acquire multicast lock only for multicast/udp streams (Wi-Fi use case)
     if (_isUdp(url)) {
@@ -95,46 +88,15 @@ class _PlayerPageState extends State<PlayerPage> {
   Widget build(BuildContext context) {
     final ctrl = _controller;
     return Scaffold(
-      appBar: AppBar(title: Text(widget.channel.name)),
       body: ctrl == null
           ? Center(child: Text(_status))
-          : Column(
-              children: [
-                AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: VlcPlayer(
-                    aspectRatio: 16 / 9,
-                    controller: ctrl,
-                    placeholder: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    "Status: $_status\nURL: ${widget.channel.url}",
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
-                Wrap(
-                  spacing: 12,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () => ctrl.play(),
-                      child: const Text("Play"),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => ctrl.pause(),
-                      child: const Text("Pause"),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => ctrl.stop(),
-                      child: const Text("Stop"),
-                    ),
-                  ],
-                ),
-              ],
+          : AspectRatio(
+              aspectRatio: 16 / 9,
+              child: VlcPlayer(
+                aspectRatio: 16 / 9,
+                controller: ctrl,
+                placeholder: const Center(child: CircularProgressIndicator()),
+              ),
             ),
     );
   }

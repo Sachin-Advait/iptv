@@ -5,4 +5,5 @@ class Routes {
 
   static const dashboard = '/dashboard';
   static const profile = '/profile';
+  static const video = '/video';
 }

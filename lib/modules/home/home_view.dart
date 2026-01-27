@@ -9,7 +9,6 @@ import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
 import 'package:oman_tv/modules/home/widget/section_row.dart';
-import 'package:oman_tv/modules/home/widget/vlc_player_page.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -134,15 +133,6 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
 
   Widget _buildBannerSection(BuildContext context, HomeState state) {
     return CarouselBanner(
-      onPlayPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) {
-              return const VideoScreen();
-            },
-          ),
-        );
-      },
       onSearch: (query) {
         // Handle search functionality
         debugPrint('Search query: $query');

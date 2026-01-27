@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/modules/annoucement/annoucement_view.dart';
@@ -34,10 +33,12 @@ class _DashboardViewState extends State<DashboardView>
 
   int selectedTabIndex = 0;
   bool isUserSelected = false;
+  final dashboardCubit = getIt<DashboardCubit>();
 
   @override
   void initState() {
     super.initState();
+    dashboardCubit.fetchTickerData();
     FocusListener.add(this);
   }
 
@@ -67,10 +68,7 @@ class _DashboardViewState extends State<DashboardView>
             Expanded(
               child: isUserSelected ? SizedBox() : page[selectedTabIndex],
             ),
-            BlocProvider.value(
-              value: getIt<DashboardCubit>(),
-              child: NewsTicker(),
-            ),
+            NewsTicker(dashboardCubit: dashboardCubit),
           ],
         ),
       ),

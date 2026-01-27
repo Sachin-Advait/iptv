@@ -9,7 +9,6 @@ import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
 import 'package:oman_tv/modules/home/widget/group_card.dart';
-import 'package:oman_tv/modules/home/widget/vlc_player_page.dart';
 
 class LiveTVView extends StatefulWidget {
   const LiveTVView({super.key});
@@ -68,17 +67,7 @@ class _LiveTVViewState extends State<LiveTVView> implements FocusListener {
         children: [
           FocusTraversalGroup(
             policy: const RecentFocusTraversalPolicy(group: FocusGroup.button),
-            child: CarouselBanner(
-              onPlayPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return const VideoScreen();
-                    },
-                  ),
-                );
-              },
-            ),
+            child: CarouselBanner(),
           ),
           20.verticalSpace,
           Column(

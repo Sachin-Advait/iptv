@@ -11,13 +11,14 @@ import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
 import 'package:oman_tv/routes/app_pages.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await GetStorage.init();
   await ScreenUtil.ensureScreenSize();
-  // await WakelockPlus.enable();
+  await WakelockPlus.enable();
   getItSetup();
 
   await SystemChrome.setPreferredOrientations([

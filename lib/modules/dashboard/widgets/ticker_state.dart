@@ -7,7 +7,9 @@ import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
 
 class NewsTicker extends StatefulWidget {
-  const NewsTicker({super.key});
+  const NewsTicker({super.key, required this.dashboardCubit});
+
+  final DashboardCubit dashboardCubit;
 
   @override
   State<NewsTicker> createState() => _NewsTickerState();
@@ -21,11 +23,6 @@ class _NewsTickerState extends State<NewsTicker> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-
-    // Fetch ticker data when widget is initialized
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DashboardCubit>().fetchTickerData();
-    });
   }
 
   void _startAutoScroll() {
@@ -60,6 +57,7 @@ class _NewsTickerState extends State<NewsTicker> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<DashboardCubit, DashboardState>(
+      bloc: widget.dashboardCubit,
       builder: (context, state) {
         // Start/stop auto-scroll based on ticker status
         if (state.tickerStatus == TickerStatus.success &&

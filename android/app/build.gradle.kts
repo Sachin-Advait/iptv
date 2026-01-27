@@ -25,21 +25,19 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-    }
 
-    packagingOptions {
-        resources {
-            pickFirsts += setOf("lib/**/libc++_shared.so")
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
         }
     }
-
    
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = false
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

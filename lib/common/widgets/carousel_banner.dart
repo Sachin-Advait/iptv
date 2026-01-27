@@ -9,12 +9,12 @@ import 'package:oman_tv/common/widgets/banner_shimmer.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
+import 'package:oman_tv/routes/app_pages.dart';
 
 class CarouselBanner extends StatefulWidget {
-  final VoidCallback? onPlayPressed;
   final Function(String)? onSearch;
 
-  const CarouselBanner({super.key, this.onPlayPressed, this.onSearch});
+  const CarouselBanner({super.key, this.onSearch});
 
   @override
   State<CarouselBanner> createState() => _CarouselBannerState();
@@ -181,15 +181,21 @@ class _CarouselBannerState extends State<CarouselBanner> {
                       : _buildSearchIcon(),
                 ),
 
-                // Play Button (Bottom Left)
-                if (widget.onPlayPressed != null && !_isSearchExpanded)
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    child: Focus(
-                      focusNode: _playFocusNode,
-                      onFocusChange: (v) {
-                        debugPrint('PLAY BUTTON FOCUS CHANGE = $v');
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  child: Focus(
+                    focusNode: _playFocusNode,
+                    onFocusChange: (v) {
+                      debugPrint('PLAY BUTTON FOCUS CHANGE = $v');
+                    },
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          Routes.video,
+                          arguments: {'videoUrl': state.mediaData?.videoUrl},
+                        );
                       },
                       child: Builder(
                         builder: (context) {
@@ -236,18 +242,23 @@ class _CarouselBannerState extends State<CarouselBanner> {
                           );
                         },
                       ),
-                      onKeyEvent: (_, event) {
-                        if (event is KeyUpEvent &&
-                            (event.logicalKey == LogicalKeyboardKey.enter ||
-                                event.logicalKey ==
-                                    LogicalKeyboardKey.select)) {
-                          widget.onPlayPressed?.call();
-                          return KeyEventResult.handled;
-                        }
-                        return KeyEventResult.ignored;
-                      },
                     ),
+                    onKeyEvent: (_, event) {
+                      if (event is KeyUpEvent &&
+                          (event.logicalKey == LogicalKeyboardKey.enter ||
+                              event.logicalKey == LogicalKeyboardKey.select)) {
+                        // widget.onPlayPressed?.call();
+                        Navigator.pushNamed(
+                          context,
+                          Routes.video,
+                          arguments: {'videoUrl': state.mediaData?.videoUrl},
+                        );
+                        return KeyEventResult.handled;
+                      }
+                      return KeyEventResult.ignored;
+                    },
                   ),
+                ),
               ],
             ),
           );

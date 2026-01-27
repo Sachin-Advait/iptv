@@ -1,4 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <!-- Storage permissions can be optional depending on VLC usage, but keeping them if needed for caching/recording -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     
     <!-- Declare this is a TV app -->
     <uses-feature
@@ -10,14 +19,6 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
     
-    <!-- Internet permission for streaming -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    
-    <!-- Optional: for wake locks if needed for video playback -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    
-    <!-- Optional: for network state -->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:label="Oman TV"
