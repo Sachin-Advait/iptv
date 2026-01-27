@@ -206,26 +206,70 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
           break;
       }
     } else if (group == FocusGroup.button) {
+      final buttons = RecentFocusNode.root?.descendants
+          .whereType<RecentFocusNode>()
+          .where((n) => n.group == FocusGroup.button)
+          .toList();
+
+      if (buttons == null || buttons.isEmpty) return true;
+
+      // Sort vertically by row (top → bottom)
+      buttons.sort((a, b) => a.row.compareTo(b.row));
+
+      // 🔹 SINGLE BUTTON MODE (backward compatible)
+      if (buttons.length == 1) {
+        switch (direction) {
+          case TraversalDirection.up:
+            debugPrint('SINGLE BUTTON ↑ → HEADER');
+            moveToHeader();
+            break;
+
+          case TraversalDirection.down:
+            debugPrint('SINGLE BUTTON ↓ → LIST ROW');
+            moveToListRow();
+            break;
+
+          case TraversalDirection.left:
+          case TraversalDirection.right:
+            debugPrint('SINGLE BUTTON ←/→ ignored');
+            break;
+        }
+        return true;
+      }
+
+      // 🔹 MULTI BUTTON MODE (dynamic)
+      if (currentNode is! RecentFocusNode) return true;
+
+      final index = buttons.indexOf(currentNode);
+
       switch (direction) {
         case TraversalDirection.up:
-          debugPrint('-----------------_SACHIN');
-          debugPrint('BUTTON ↑ → HEADER');
-          moveToHeader(); // go to tabs
+          if (index > 0) {
+            debugPrint('BUTTON ↑ → BUTTON');
+            setFocus(buttons[index - 1], true); // button to button
+          } else {
+            debugPrint('TOP BUTTON ↑ → HEADER');
+            moveToHeader(); // top → header
+          }
           break;
 
         case TraversalDirection.down:
-          debugPrint('BUTTON ↓ → LIST ROW');
-          moveToListRow(); // go to first content row
+          if (index < buttons.length - 1) {
+            debugPrint('BUTTON ↓ → BUTTON');
+            setFocus(buttons[index + 1], true); // button to button
+          } else {
+            debugPrint('BOTTOM BUTTON ↓ → LIST ROW');
+            moveToListRow(); // bottom → list
+          }
           break;
 
         case TraversalDirection.left:
         case TraversalDirection.right:
-          // single button → no horizontal movement
           debugPrint('BUTTON ←/→ ignored');
           break;
       }
 
-      return true; // stop propagation
+      return true;
     } else {
       // horizontal
       switch (direction) {
@@ -266,8 +310,23 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
           );
 
           if (currentNode is RecentFocusNode && currentNode.row == 0) {
-            debugPrint('DECISION: moveToHeaderStart()  [row==0]');
-            moveToHeaderStart();
+            debugPrint('DECISION: moveToButtonsOrHeader()  [row==0]');
+
+            final buttons = RecentFocusNode.root?.descendants
+                .whereType<RecentFocusNode>()
+                .where((n) => n.group == FocusGroup.button)
+                .toList();
+
+            if (buttons != null && buttons.isNotEmpty) {
+              // Sort top → bottom
+              buttons.sort((a, b) => a.row.compareTo(b.row));
+
+              debugPrint('LIST ↑ → BOTTOM BUTTON');
+              setFocus(buttons.last, true); // 🔥 go to PLAY button (bottom one)
+            } else {
+              debugPrint('LIST ↑ → HEADER');
+              moveToHeader();
+            }
           } else {
             debugPrint('DECISION: _moveToNextListRow()  [row>0]');
             _moveToNextListRow(currentNode, -1);
