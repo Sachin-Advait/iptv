@@ -103,10 +103,12 @@ class _CategoryCardState extends State<CategoryCard> {
                       : null,
 
                   // 🎯 ROW MODE STYLE
-                  color: widget.isHeaderStyle
-                      ? AppColors.beige
-                      : (isFocused ? AppColors.primary : AppColors.beige),
+                  color: isFocused ? AppColors.primary : AppColors.beige,
 
+                  // border: Border.all(
+                  //   width: widget.isHeaderStyle ? 1 : 0,
+                  //   color: AppColors.brownDeep,
+                  // ),
                   borderRadius: BorderRadius.circular(
                     widget.isHeaderStyle
                         ? 10.radiusMultipier

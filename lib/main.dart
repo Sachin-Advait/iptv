@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:oman_tv/common/constants/app_strings.dart';
@@ -8,6 +9,7 @@ import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/common/utils/global_keys.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
+import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
 import 'package:oman_tv/routes/app_pages.dart';
 
 Future<void> main() async {
@@ -44,31 +46,34 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) => ScreenUtilInit(
-        designSize: Size(constraints.maxWidth, constraints.maxHeight),
-        minTextAdapt: true,
-        ensureScreenSize: true,
-        splitScreenMode: true,
-        builder: (context, child) {
-          final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    return BlocProvider(
+      create: (context) => getIt<HomeCubit>(),
+      child: LayoutBuilder(
+        builder: (context, constraints) => ScreenUtilInit(
+          designSize: Size(constraints.maxWidth, constraints.maxHeight),
+          minTextAdapt: true,
+          ensureScreenSize: true,
+          splitScreenMode: true,
+          builder: (context, child) {
+            final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
 
-          AppScreenUtil().init(constraints);
+            AppScreenUtil().init(constraints);
 
-          return MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: TextScaler.linear(isTablet ? 1.2 : 1.0)),
-            child: MaterialApp(
-              initialRoute: Routes.splash,
-              navigatorKey: GlobalKeys.navigatorKey,
-              onGenerateRoute: Pages.onGenerateRoute,
-              title: AppStrings.appTitle,
-              debugShowCheckedModeBanner: false,
-              theme: AppThemes.lightTheme,
-            ),
-          );
-        },
+            return MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(isTablet ? 1.2 : 1.0)),
+              child: MaterialApp(
+                initialRoute: Routes.splash,
+                navigatorKey: GlobalKeys.navigatorKey,
+                onGenerateRoute: Pages.onGenerateRoute,
+                title: AppStrings.appTitle,
+                debugShowCheckedModeBanner: false,
+                theme: AppThemes.lightTheme,
+              ),
+            );
+          },
+        ),
       ),
     );
   }

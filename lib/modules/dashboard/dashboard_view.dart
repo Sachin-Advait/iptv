@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/common/utils/focus_traversal.dart';
+import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/modules/annoucement/annoucement_view.dart';
 import 'package:oman_tv/modules/catch_up/catch_up_view.dart';
+import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
 import 'package:oman_tv/modules/dashboard/widgets/header.dart';
 import 'package:oman_tv/modules/dashboard/widgets/ticker_state.dart';
 import 'package:oman_tv/modules/home/home_view.dart';
@@ -64,7 +67,10 @@ class _DashboardViewState extends State<DashboardView>
             Expanded(
               child: isUserSelected ? SizedBox() : page[selectedTabIndex],
             ),
-            NewsTicker(),
+            BlocProvider.value(
+              value: getIt<DashboardCubit>(),
+              child: NewsTicker(),
+            ),
           ],
         ),
       ),

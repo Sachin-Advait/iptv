@@ -1,22 +1,14 @@
 class ApiConstants {
-  static const String baseUrl =
-      "https://serveiqbackend.insyncproducts.online/serveiq/api/";
+  static const String baseUrl = "http://109.205.180.193:8090/api";
   // static const String baseUrl = "http://192.168.1.121:8085/serveiq/api/";
 
-  // Auth
-  static const String login = 'auth/login';
+  // Home
+  static const String media = '/media/category';
+  static const String tickers = '/news/published/titles';
 
-  // Services
-  static const String mainServices = 'services/branch/main/';
-  static const String subServices = 'services/subservices/';
-  static const String category = 'categories';
-
-  // Tokens
-  static const String generateToken = 'tokens/generate';
-
-  // Whatsapp
-  static const String sendWhatsapp = 'whatsapp/send';
-
-  // Visitor
-  static const String visitors = 'visitors/';
+  // Category
+  static const String home = '$media/Home';
+  static const String live = '$media/Live TV';
+  static const String vod = '$media/VOD';
+  static const String catchUp = '$media/Catch-UP';
 }
