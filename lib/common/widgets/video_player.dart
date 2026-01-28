@@ -90,11 +90,10 @@ class _VideoViewState extends State<VideoView> {
     return Scaffold(
       body: ctrl == null
           ? Center(child: Text(_status))
-          : AspectRatio(
-              aspectRatio: 16 / 9,
+          : SizedBox.expand(
               child: VlcPlayer(
-                aspectRatio: 16 / 9,
                 controller: ctrl,
+                aspectRatio: 16 / 9,
                 placeholder: const Center(child: CircularProgressIndicator()),
               ),
             ),
