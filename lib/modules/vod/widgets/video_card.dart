@@ -52,7 +52,7 @@ class _VideoCardState extends State<VideoCard> {
             final isFocused = Focus.of(context).hasFocus;
 
             return AnimatedScale(
-              scale: isFocused ? 1.1 : .98,
+              scale: isFocused ? 1.13 : .98,
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
               child: Container(

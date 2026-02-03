@@ -50,49 +50,59 @@ class _VodViewState extends State<VodView> implements FocusListener {
           20.verticalSpace,
           SizedBox(
             height: 120.heightMultiplier,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 20.widthMultiplier),
-              itemCount: row1.length,
-              separatorBuilder: (context, index) => 10.horizontalSpace,
-              itemBuilder: (context, index) {
-                final video = row1[index];
+            child: FocusTraversalGroup(
+              policy: RecentFocusTraversalPolicy(group: FocusGroup.listRow),
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: 20.widthMultiplier),
+                itemCount: row1.length,
+                separatorBuilder: (context, index) => 10.horizontalSpace,
+                itemBuilder: (context, index) {
+                  final video = row1[index];
 
-                return VideoCard(
-                  rowId: 1,
-                  columnId: index,
-                  imageUrl: video.imageUrl,
-                  title: video.title,
-                  description: video.description,
-                  duration: video.duration,
-                  onTap: () {},
-                );
-              },
+                  return VideoCard(
+                    rowId: 0,
+                    columnId: index,
+                    imageUrl: video.imageUrl,
+                    title: video.title,
+                    description: video.description,
+                    duration: video.duration,
+                    onTap: () {},
+                  );
+                },
+              ),
             ),
           ),
           20.verticalSpace,
           SizedBox(
             height: 120.heightMultiplier,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 20.widthMultiplier),
-              itemCount: row2.length,
-              separatorBuilder: (context, index) => 10.horizontalSpace,
-              itemBuilder: (context, index) {
-                final video = row2[index];
-                return VideoCard(
-                  rowId: 2,
-                  columnId: index,
-                  imageUrl: video.imageUrl,
-                  title: video.title,
-                  description: video.description,
-                  duration: video.duration,
-                  onTap: () {},
-                );
-              },
+            child: FocusTraversalGroup(
+              policy: RecentFocusTraversalPolicy(group: FocusGroup.listRow),
+              child: Stack(
+                children: [
+                  ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    clipBehavior: Clip.none,
+                    padding: EdgeInsets.symmetric(horizontal: 20.widthMultiplier),
+                    itemCount: row2.length,
+                    separatorBuilder: (context, index) => 10.horizontalSpace,
+                    itemBuilder: (context, index) {
+                      final video = row2[index];
+                      return VideoCard(
+                        rowId: 1,
+                        columnId: index,
+                        imageUrl: video.imageUrl,
+                        title: video.title,
+                        description: video.description,
+                        duration: video.duration,
+                        onTap: () {},
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-          30.verticalSpace,
         ],
       ),
     );
