@@ -8,6 +8,7 @@ import 'package:oman_tv/common/widgets/carousel_banner.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
+import 'package:oman_tv/modules/home/widget/section_data.dart';
 import 'package:oman_tv/modules/home/widget/section_row.dart';
 
 class HomeView extends StatefulWidget {
@@ -54,7 +55,12 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
                 policy: const RecentFocusTraversalPolicy(
                   group: FocusGroup.button,
                 ),
-                child: _buildBannerSection(context, state),
+                child: CarouselBanner(
+                  onSearch: (query) {
+                    // Handle search functionality
+                    debugPrint('Search query: $query');
+                  },
+                ),
               ),
               20.verticalSpace,
               Column(
@@ -109,7 +115,10 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
                       ),
                     ),
                   ),
-                  RadioSection(rowId: _liveTvHeaderMode ? 2 : 1),
+                  RadioSection(
+                    rowId: _liveTvHeaderMode ? 2 : 1,
+                    items: HomeSectionData.radioItems,
+                  ),
                   Padding(
                     padding: EdgeInsets.only(left: 24.widthMultiplier),
                     child: Text(
@@ -127,15 +136,6 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
             ],
           ),
         );
-      },
-    );
-  }
-
-  Widget _buildBannerSection(BuildContext context, HomeState state) {
-    return CarouselBanner(
-      onSearch: (query) {
-        // Handle search functionality
-        debugPrint('Search query: $query');
       },
     );
   }

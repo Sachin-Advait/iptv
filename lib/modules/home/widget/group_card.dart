@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:oman_tv/common/utils/app_screen_util.dart';
 import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
+import 'package:oman_tv/modules/home/widget/section_data.dart';
 
 class GroupCard extends StatefulWidget {
   final int rowId;
@@ -43,13 +44,13 @@ class _GroupCardState extends State<GroupCard> {
             final isFocused = Focus.of(context).hasFocus;
 
             return AnimatedScale(
-              scale: isFocused ? 1.2 : 1,
+              scale: isFocused ? 1.3 : 1,
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
               child: Container(
                 margin: EdgeInsets.symmetric(
                   horizontal: isFocused
-                      ? 12.widthMultiplier
+                      ? 25.widthMultiplier
                       : 8.widthMultiplier,
                 ),
                 width: 230.widthMultiplier,
@@ -121,25 +122,3 @@ class _GroupCardState extends State<GroupCard> {
     );
   }
 }
-
-class RadioItem {
-  final String imagePath;
-  final Color? backgroundColor;
-  final double? imageWidth;
-  final double? imageHeight;
-  final VoidCallback? onTap;
-  final RadioImageType imageType;
-  final String? label;
-
-  RadioItem({
-    required this.imagePath,
-    this.backgroundColor,
-    this.imageWidth,
-    this.imageHeight,
-    this.onTap,
-    this.imageType = RadioImageType.asset,
-    this.label,
-  });
-}
-
-enum RadioImageType { asset, network }

@@ -99,18 +99,3 @@ class _CatchUpViewState extends State<CatchUpView> implements FocusListener {
     );
   }
 }
-
-// Data model for video
-class VideoData {
-  final String imageUrl;
-  final String title;
-  final String description;
-  final String duration;
-
-  const VideoData({
-    required this.imageUrl,
-    required this.title,
-    required this.description,
-    required this.duration,
-  });
-}

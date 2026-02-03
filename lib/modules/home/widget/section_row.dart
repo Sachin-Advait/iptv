@@ -148,12 +148,14 @@ class AnnouncementSection extends StatelessWidget {
 
 class RadioSection extends StatelessWidget {
   final int rowId;
+  final List<RadioItem> items;
   final EdgeInsets? padding;
   final VoidCallback? onItemPressed;
 
   const RadioSection({
     super.key,
     required this.rowId,
+    required this.items,
     this.padding,
     this.onItemPressed,
   });
@@ -170,10 +172,10 @@ class RadioSection extends StatelessWidget {
             vertical: 20.heightMultiplier,
           ),
           scrollDirection: Axis.horizontal,
-          itemCount: HomeSectionData.radioItems.length,
+          itemCount: items.length,
           separatorBuilder: (context, index) => 12.horizontalSpace,
           itemBuilder: (context, index) {
-            final item = HomeSectionData.radioItems[index];
+            final item = items[index];
             return GroupCard(
               rowId: rowId,
               columnId: index,

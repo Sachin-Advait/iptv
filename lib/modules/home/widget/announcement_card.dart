@@ -47,7 +47,7 @@ class _AnnouncementCardState extends State<AnnouncementCard> {
             final isFocused = Focus.of(context).hasFocus;
 
             return AnimatedScale(
-              scale: isFocused ? 1.2 : 1.0,
+              scale: isFocused ? 1.3 : 1.0,
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
               child: Container(
@@ -55,7 +55,7 @@ class _AnnouncementCardState extends State<AnnouncementCard> {
                 padding: EdgeInsets.symmetric(vertical: 16.heightMultiplier),
                 margin: EdgeInsets.symmetric(
                   horizontal: isFocused
-                      ? 12.widthMultiplier
+                      ? 25.widthMultiplier
                       : 8.widthMultiplier,
                 ),
                 decoration: BoxDecoration(

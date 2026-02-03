@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oman_tv/configs/assets/app_channels.dart';
 import 'package:oman_tv/configs/assets/app_images.dart';
-import 'package:oman_tv/modules/home/widget/group_card.dart';
 
 class HomeSectionData {
   static List<Map<String, String>> get liveTVitems => [
@@ -77,4 +76,47 @@ class HomeSectionData {
     RadioItem(imagePath: AppChannels.jld),
     RadioItem(imagePath: AppChannels.omanAir),
   ];
+
+  static List<RadioItem> get group1Items => [
+    RadioItem(imagePath: AppChannels.bbc),
+    RadioItem(imagePath: AppChannels.cnn),
+    RadioItem(imagePath: AppChannels.cbs),
+    RadioItem(imagePath: AppChannels.sky),
+  ];
+
+  static List<RadioItem> get group2Items => [
+    RadioItem(imagePath: AppChannels.omanAir),
+    RadioItem(imagePath: AppChannels.channel1),
+    RadioItem(imagePath: AppChannels.pngegg),
+    RadioItem(imagePath: AppChannels.ubc2),
+  ];
+
+  static List<RadioItem> get group3Items => [
+    RadioItem(imagePath: AppChannels.bein),
+    RadioItem(imagePath: AppChannels.fox),
+    RadioItem(imagePath: AppChannels.star),
+    RadioItem(imagePath: AppChannels.tenSports),
+  ];
 }
+
+class RadioItem {
+  final String imagePath;
+  final Color? backgroundColor;
+  final double? imageWidth;
+  final double? imageHeight;
+  final VoidCallback? onTap;
+  final RadioImageType imageType;
+  final String? label;
+
+  RadioItem({
+    required this.imagePath,
+    this.backgroundColor,
+    this.imageWidth,
+    this.imageHeight,
+    this.onTap,
+    this.imageType = RadioImageType.asset,
+    this.label,
+  });
+}
+
+enum RadioImageType { asset, network }

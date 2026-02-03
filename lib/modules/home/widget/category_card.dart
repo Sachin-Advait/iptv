@@ -75,11 +75,15 @@ class _CategoryCardState extends State<CategoryCard> {
                 widget.isHeaderStyle && widget.isSelected && !isFocused;
 
             return AnimatedScale(
-              scale: isFocused ? 1.1 : 1.0,
+              scale: isFocused ? 1.3 : 1.0,
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOut,
               child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 8.widthMultiplier),
+                margin: EdgeInsets.symmetric(
+                  horizontal: isFocused
+                      ? 25.widthMultiplier
+                      : 8.widthMultiplier,
+                ),
                 alignment: Alignment.center,
                 width: widget.isHeaderStyle
                     ? 160.widthMultiplier
@@ -102,19 +106,12 @@ class _CategoryCardState extends State<CategoryCard> {
                         )
                       : null,
 
-                  // 🎯 ROW MODE STYLE
                   color: isFocused ? AppColors.primary : AppColors.beige,
-
-                  // border: Border.all(
-                  //   width: widget.isHeaderStyle ? 1 : 0,
-                  //   color: AppColors.brownDeep,
-                  // ),
                   borderRadius: BorderRadius.circular(
                     widget.isHeaderStyle
                         ? 10.radiusMultipier
                         : 16.radiusMultipier,
                   ),
-
                   boxShadow: widget.isHeaderStyle
                       ? (isFocused
                             ? [
@@ -128,10 +125,10 @@ class _CategoryCardState extends State<CategoryCard> {
                       : (isFocused
                             ? [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.4),
-                                  blurRadius: 6,
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  blurRadius: 4,
                                   offset: const Offset(2, 2),
-                                  spreadRadius: 2,
+                                  spreadRadius: 3,
                                 ),
                               ]
                             : null),
