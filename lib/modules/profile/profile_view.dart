@@ -99,7 +99,7 @@ class _ProfileViewState extends State<ProfileView> {
               color: AppColors.lightBeige.withValues(alpha: .4),
               border: Border(
                 right: BorderSide(
-                  color: AppColors.black.withOpacity(0.1),
+                  color: AppColors.black.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -135,7 +135,7 @@ class _ProfileViewState extends State<ProfileView> {
                   userEmail,
                   style: context.medium.copyWith(
                     fontSize: 16.textMultiplier,
-                    color: AppColors.black.withOpacity(0.6),
+                    color: AppColors.black.withValues(alpha: 0.6),
                   ),
                 ),
                 20.verticalSpace,
@@ -143,7 +143,7 @@ class _ProfileViewState extends State<ProfileView> {
                   margin: EdgeInsets.symmetric(horizontal: 30.widthMultiplier),
                   padding: EdgeInsets.all(20.widthMultiplier),
                   decoration: BoxDecoration(
-                    color: AppColors.black.withOpacity(0.05),
+                    color: AppColors.black.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12.radiusMultipier),
                   ),
                   child: Column(
@@ -218,7 +218,7 @@ class _ProfileViewState extends State<ProfileView> {
           label,
           style: context.medium.copyWith(
             fontSize: 14.textMultiplier,
-            color: AppColors.black.withOpacity(0.5),
+            color: AppColors.black.withValues(alpha: 0.5),
           ),
         ),
         Text(
@@ -276,12 +276,12 @@ class _SettingsTileState extends State<SettingsTile> {
               margin: EdgeInsets.only(bottom: 12.heightMultiplier),
               decoration: BoxDecoration(
                 color: isFocused
-                    ? AppColors.black.withOpacity(0.1)
+                    ? AppColors.black.withValues(alpha: 0.1)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(8.radiusMultipier),
                 border: Border.all(
                   color: isFocused
-                      ? AppColors.black.withOpacity(0.3)
+                      ? AppColors.black.withValues(alpha: 0.3)
                       : Colors.transparent,
                   width: 2,
                 ),
@@ -294,8 +294,8 @@ class _SettingsTileState extends State<SettingsTile> {
                     height: 48.heightMultiplier,
                     decoration: BoxDecoration(
                       color: widget.item.isDestructive
-                          ? Colors.red.withOpacity(0.1)
-                          : AppColors.black.withOpacity(0.1),
+                          ? Colors.red.withValues(alpha: 0.1)
+                          : AppColors.black.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8.radiusMultipier),
                     ),
                     child: Icon(
@@ -303,7 +303,7 @@ class _SettingsTileState extends State<SettingsTile> {
                       size: 24.widthMultiplier,
                       color: widget.item.isDestructive
                           ? Colors.red
-                          : AppColors.black.withOpacity(0.9),
+                          : AppColors.black.withValues(alpha: 0.9),
                     ),
                   ),
                   20.horizontalSpace,
@@ -327,8 +327,8 @@ class _SettingsTileState extends State<SettingsTile> {
                           style: context.regular.copyWith(
                             fontSize: 14.textMultiplier,
                             color: widget.item.isDestructive
-                                ? Colors.red.withOpacity(0.7)
-                                : AppColors.black.withOpacity(0.5),
+                                ? Colors.red.withValues(alpha: 0.7)
+                                : AppColors.black.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -338,7 +338,9 @@ class _SettingsTileState extends State<SettingsTile> {
                   Icon(
                     Icons.chevron_right,
                     size: 28.widthMultiplier,
-                    color: AppColors.black.withOpacity(isFocused ? 0.9 : 0.3),
+                    color: AppColors.black.withValues(
+                      alpha: isFocused ? 0.9 : 0.3,
+                    ),
                   ),
                 ],
               ),

@@ -315,7 +315,7 @@ class _CarouselBannerState extends State<CarouselBanner> {
                   shape: BoxShape.circle,
                   color: isFocused
                       ? AppColors.beige
-                      : Colors.white.withOpacity(0.9),
+                      : Colors.white.withValues(alpha: 0.9),
                   boxShadow: isFocused
                       ? [
                           BoxShadow(
@@ -326,7 +326,7 @@ class _CarouselBannerState extends State<CarouselBanner> {
                         ]
                       : [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -401,7 +401,7 @@ class _CarouselBannerState extends State<CarouselBanner> {
               borderRadius: BorderRadius.circular(25.radiusMultipier),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
