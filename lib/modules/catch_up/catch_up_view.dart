@@ -20,7 +20,7 @@ class _CatchUpViewState extends State<CatchUpView> implements FocusListener {
   @override
   void initState() {
     super.initState();
-    context.read<HomeCubit>().fetchMedia(ApiConstants.home);
+    context.read<HomeCubit>().fetchMedia(ApiConstants.catchUp);
     FocusListener.add(this);
   }
 
