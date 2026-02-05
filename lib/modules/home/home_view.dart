@@ -45,98 +45,92 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeCubit, HomeState>(
-      builder: (context, state) {
-        return Scaffold(
-          backgroundColor: AppColors.bg,
-          body: ListView(
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: ListView(
+        children: [
+          FocusTraversalGroup(
+            policy: const RecentFocusTraversalPolicy(group: FocusGroup.button),
+            child: CarouselBanner(
+              onSearch: (query) {
+                // Handle search functionality
+                debugPrint('Search query: $query');
+              },
+            ),
+          ),
+          20.verticalSpace,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FocusTraversalGroup(
-                policy: const RecentFocusTraversalPolicy(
-                  group: FocusGroup.button,
-                ),
-                child: CarouselBanner(
-                  onSearch: (query) {
-                    // Handle search functionality
-                    debugPrint('Search query: $query');
-                  },
+              Padding(
+                padding: EdgeInsets.only(left: 24.widthMultiplier),
+                child: Text(
+                  'Live TV Group',
+                  style: context.bold.copyWith(
+                    fontSize: 18.textMultiplier,
+                    color: AppColors.black,
+                  ),
                 ),
               ),
-              20.verticalSpace,
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 24.widthMultiplier),
-                    child: Text(
-                      'Live TV Group',
-                      style: context.bold.copyWith(
-                        fontSize: 18.textMultiplier,
-                        color: AppColors.black,
-                      ),
-                    ),
-                  ),
-                  LiveTVSection(
-                    rowId: 0,
-                    isHeaderMode: _liveTvHeaderMode,
-                    selectedIndex: _selectedLiveTvIndex,
-                    onCategorySelected: (index, name) {
-                      setState(() {
-                        _selectedLiveTvIndex = index;
-                        _selectedLiveTvName = name;
-                        _liveTvHeaderMode = true;
-                      });
-                    },
-                  ),
-                  if (_liveTvHeaderMode) ...[
-                    10.verticalSpace,
-                    Padding(
-                      padding: EdgeInsets.only(left: 24.widthMultiplier),
-                      child: Text(
-                        _selectedLiveTvName!,
-                        style: context.bold.copyWith(
-                          fontSize: 18.textMultiplier,
-                          color: AppColors.black,
-                        ),
-                      ),
-                    ),
-                    DynamicLiveTVSection(
-                      categoryIndex: _selectedLiveTvIndex!,
-                      rowId: 1,
-                    ),
-                  ],
-                  Padding(
-                    padding: EdgeInsets.only(left: 24.widthMultiplier),
-                    child: Text(
-                      'Radio Group',
-                      style: context.bold.copyWith(
-                        fontSize: 18.textMultiplier,
-                        color: AppColors.black,
-                      ),
-                    ),
-                  ),
-                  RadioSection(
-                    rowId: _liveTvHeaderMode ? 2 : 1,
-                    items: HomeSectionData.radioItems,
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 24.widthMultiplier),
-                    child: Text(
-                      'Announcement',
-                      style: context.bold.copyWith(
-                        fontSize: 18.textMultiplier,
-                        color: AppColors.black,
-                      ),
-                    ),
-                  ),
-                  AnnouncementSection(rowId: _liveTvHeaderMode ? 3 : 2),
-                ],
+              LiveTVSection(
+                rowId: 0,
+                isHeaderMode: _liveTvHeaderMode,
+                selectedIndex: _selectedLiveTvIndex,
+                onCategorySelected: (index, name) {
+                  setState(() {
+                    _selectedLiveTvIndex = index;
+                    _selectedLiveTvName = name;
+                    _liveTvHeaderMode = true;
+                  });
+                },
               ),
-              10.verticalSpace,
+              if (_liveTvHeaderMode) ...[
+                10.verticalSpace,
+                Padding(
+                  padding: EdgeInsets.only(left: 24.widthMultiplier),
+                  child: Text(
+                    _selectedLiveTvName!,
+                    style: context.bold.copyWith(
+                      fontSize: 18.textMultiplier,
+                      color: AppColors.black,
+                    ),
+                  ),
+                ),
+                DynamicLiveTVSection(
+                  categoryIndex: _selectedLiveTvIndex!,
+                  rowId: 1,
+                ),
+              ],
+              Padding(
+                padding: EdgeInsets.only(left: 24.widthMultiplier),
+                child: Text(
+                  'Radio Group',
+                  style: context.bold.copyWith(
+                    fontSize: 18.textMultiplier,
+                    color: AppColors.black,
+                  ),
+                ),
+              ),
+              RadioSection(
+                rowId: _liveTvHeaderMode ? 2 : 1,
+                items: HomeSectionData.radioItems,
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 24.widthMultiplier),
+                child: Text(
+                  'Announcement',
+                  style: context.bold.copyWith(
+                    fontSize: 18.textMultiplier,
+                    color: AppColors.black,
+                  ),
+                ),
+              ),
+              AnnouncementSection(rowId: _liveTvHeaderMode ? 3 : 2),
             ],
           ),
-        );
-      },
+          10.verticalSpace,
+        ],
+      ),
     );
   }
 }

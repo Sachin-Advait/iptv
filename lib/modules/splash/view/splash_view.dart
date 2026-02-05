@@ -5,7 +5,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:oman_tv/common/utils/app_screen_util.dart';
 import 'package:oman_tv/configs/assets/app_images.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
-import 'package:oman_tv/modules/dashboard/dashboard_view.dart';
+import 'package:oman_tv/routes/app_pages.dart';
 
 import '../bloc/splash_bloc.dart';
 
@@ -22,14 +22,9 @@ class SplashView extends StatelessWidget {
             switch (state) {
               case SplashInitial():
               case NavigateToHomeActionState():
-                // context.goNamed(Routes.home);
 
                 // case NavigateToLoginActionState():
-                // context.goNamed(Routes.home);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => DashboardView()),
-                );
+                Navigator.pushReplacementNamed(context, Routes.dashboard);
             }
           },
           child: Center(

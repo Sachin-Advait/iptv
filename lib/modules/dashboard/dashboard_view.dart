@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/common/utils/focus_traversal.dart';
-import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/modules/annoucement/annoucement_view.dart';
 import 'package:oman_tv/modules/catch_up/catch_up_view.dart';
 import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
@@ -33,12 +33,11 @@ class _DashboardViewState extends State<DashboardView>
 
   int selectedTabIndex = 0;
   bool isUserSelected = false;
-  final dashboardCubit = getIt<DashboardCubit>();
 
   @override
   void initState() {
     super.initState();
-    dashboardCubit.fetchTickerData();
+    context.read<DashboardCubit>().fetchTickerData();
     FocusListener.add(this);
   }
 
@@ -50,26 +49,32 @@ class _DashboardViewState extends State<DashboardView>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Focus(
-        focusNode: _focusNode,
-        descendantsAreFocusable: true,
-        child: Column(
-          children: <Widget>[
-            FocusTraversalGroup(
-              policy: const RecentFocusTraversalPolicy(
-                group: FocusGroup.header,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        debugPrint('Back blocked on Dashboard');
+      },
+      child: Scaffold(
+        body: Focus(
+          focusNode: _focusNode,
+          descendantsAreFocusable: true,
+          child: Column(
+            children: <Widget>[
+              FocusTraversalGroup(
+                policy: const RecentFocusTraversalPolicy(
+                  group: FocusGroup.header,
+                ),
+                child: Header(
+                  currentIndex: selectedTabIndex,
+                  userSelected: isUserSelected,
+                ),
               ),
-              child: Header(
-                currentIndex: selectedTabIndex,
-                userSelected: isUserSelected,
+              Expanded(
+                child: isUserSelected ? SizedBox() : page[selectedTabIndex],
               ),
-            ),
-            Expanded(
-              child: isUserSelected ? SizedBox() : page[selectedTabIndex],
-            ),
-            NewsTicker(dashboardCubit: dashboardCubit),
-          ],
+              NewsTicker(),
+            ],
+          ),
         ),
       ),
     );

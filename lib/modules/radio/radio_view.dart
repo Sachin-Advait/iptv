@@ -17,20 +17,12 @@ class RadioView extends StatefulWidget {
 
 class _RadioViewState extends State<RadioView> implements FocusListener {
   final RadioPlayerService _player = RadioPlayerService();
-
-  void _onStationSelected(RadioStation station) async {
-    setState(() {
-      currentlyPlaying = station;
-    });
-
-    await _player.play(station.streamUrl);
-  }
+  RadioStation? currentlyPlaying;
 
   @override
   void initState() {
     super.initState();
     FocusListener.add(this);
-    currentlyPlaying = radioStations[1];
   }
 
   @override
@@ -40,7 +32,13 @@ class _RadioViewState extends State<RadioView> implements FocusListener {
     }
   }
 
-  RadioStation? currentlyPlaying;
+  void _onStationSelected(RadioStation station) async {
+    setState(() {
+      currentlyPlaying = station;
+    });
+
+    await _player.play(station.streamUrl);
+  }
 
   final List<RadioStation> radioStations = [
     RadioStation(
