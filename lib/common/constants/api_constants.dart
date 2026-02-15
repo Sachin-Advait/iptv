@@ -11,4 +11,5 @@ class ApiConstants {
   static const String live = '$media/Live TV';
   static const String vod = '$media/VOD';
   static const String catchUp = '$media/Catch-UP';
+  static const String register = '/player/register';
 }
