@@ -1,6 +1,6 @@
 class ApiConstants {
   static const String baseUrl = "http://109.205.180.193:8090/api";
-  // static const String baseUrl = "http://192.168.1.121:8085/serveiq/api/";
+  static const String wsUrl = "wss://109.205.180.193:8090/iptv/api";
 
   // Home
   static const String media = '/media/category';

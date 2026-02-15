@@ -26,6 +26,8 @@ dependencies:
   shimmer: ^3.0.0
   flutter_vlc_player_16kb: ^7.4.7
   flutter_multicast_lock: ^1.1.1
+  stomp_dart_client: ^3.0.1
+  connectivity_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:

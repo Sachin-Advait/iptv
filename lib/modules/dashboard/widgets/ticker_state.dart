@@ -16,11 +16,27 @@ class NewsTicker extends StatefulWidget {
 class _NewsTickerState extends State<NewsTicker> {
   late ScrollController _scrollController;
   Timer? _scrollTimer;
+  Timer? _errorPollTimer;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+  }
+
+  void _startErrorPolling() {
+    if (_errorPollTimer?.isActive == true) return; // avoid duplicate timers
+
+    _errorPollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      debugPrint('🔁 Polling ticker API due to error...');
+      context.read<DashboardCubit>().fetchTickerData();
+      // 👆 replace with your actual API method
+    });
+  }
+
+  void _stopErrorPolling() {
+    _errorPollTimer?.cancel();
+    _errorPollTimer = null;
   }
 
   void _startAutoScroll() {
@@ -49,12 +65,20 @@ class _NewsTickerState extends State<NewsTicker> {
   void dispose() {
     _scrollTimer?.cancel();
     _scrollController.dispose();
+    _errorPollTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<DashboardCubit, DashboardState>(
+    return BlocConsumer<DashboardCubit, DashboardState>(
+      listener: (context, state) {
+        if (state.tickerStatus == TickerStatus.error) {
+          _startErrorPolling();
+        } else {
+          _stopErrorPolling();
+        }
+      },
       builder: (context, state) {
         // Start/stop auto-scroll based on ticker status
         if (state.tickerStatus == TickerStatus.success &&
