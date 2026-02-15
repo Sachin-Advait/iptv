@@ -1,6 +1,6 @@
 class ApiConstants {
-  static const String baseUrl = "http://109.205.180.193:8090/api";
-  static const String wsUrl = "wss://109.205.180.193:8090/iptv/api";
+  static const String baseUrl = "http://iptvapi.smartsuite.me/api";
+  static const String wsUrl = "wss://iptvapi.smartsuite.me/api/iptv/ws";
 
   // Home
   static const String media = '/media/category';

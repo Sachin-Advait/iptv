@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:equatable/equatable.dart';
@@ -32,13 +31,13 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       final existingDeviceId = SessionManager.getDeviceId();
 
       if (existingDeviceId.isEmpty) {
-        debugPrint('[SPLASH] 📱 No device ID found, registering device...');
+        debugPrint('[SPLASH] 📱 No saved device ID, registering device...');
 
         // Register the device
         final deviceId = await _registerDevice();
 
         if (deviceId != null) {
-          debugPrint('[SPLASH] ✅ Device registered successfully: $deviceId');
+          debugPrint('[SPLASH] ✅ Device registered: $deviceId');
         }
       } else {
         debugPrint('[SPLASH] ✅ Device already registered: $existingDeviceId');
@@ -50,7 +49,6 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       debugPrint('[SPLASH] ❌ Error during initialization: $e');
 
       // Still navigate to home even if registration fails
-      // The app can retry registration later or work in offline mode
       await Future.delayed(const Duration(milliseconds: 2000));
       emit(NavigateToHomeActionState());
     }
@@ -62,10 +60,10 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       final packageInfo = await PackageInfo.fromPlatform();
       final appVersion = packageInfo.version;
 
-      // Generate a unique device ID based on actual device info
+      // Generate persistent device ID (survives reinstall)
       final deviceId = await _generateDeviceId();
 
-      // Get device location from configuration or generate default
+      // Get device location from configuration
       final location = DeviceConfig.getLocation();
 
       // Prepare registration data
@@ -75,7 +73,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
         'appVersion': appVersion,
       };
 
-      debugPrint('[SPLASH] 📤 Registering device with data: $registrationData');
+      debugPrint('[SPLASH] 📤 Registering device: $registrationData');
 
       // Call registration API
       final response = await _apiClient.postApi(
@@ -87,7 +85,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
         // Save device ID to session
         await SessionManager.saveDeviceId(deviceId);
 
-        debugPrint('[SPLASH] ✅ Device registered and saved: $deviceId');
+        debugPrint('[SPLASH] ✅ Device registered successfully');
         debugPrint('[SPLASH] 📍 Location: $location');
 
         return deviceId;
@@ -96,10 +94,9 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
           '[SPLASH] ⚠️ Registration failed with status: ${response?.statusCode}',
         );
 
-        // Save device ID locally anyway so we can retry later
+        // Save device ID locally anyway
         await SessionManager.saveDeviceId(deviceId);
 
-        debugPrint('[SPLASH] 💾 Device ID saved locally for retry');
         return deviceId;
       }
     } catch (e) {
@@ -109,9 +106,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       try {
         final deviceId = await _generateDeviceId();
         await SessionManager.saveDeviceId(deviceId);
-        debugPrint(
-          '[SPLASH] 💾 Device ID saved locally for later registration: $deviceId',
-        );
+        debugPrint('[SPLASH] 💾 Device ID saved locally: $deviceId');
         return deviceId;
       } catch (saveError) {
         debugPrint('[SPLASH] ❌ Failed to save device ID: $saveError');
@@ -120,39 +115,37 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     }
   }
 
+  /// Generates a persistent device ID for Android
+  /// Uses Android ID which survives app reinstallation
   Future<String> _generateDeviceId() async {
     try {
-      if (Platform.isAndroid) {
-        final androidInfo = await _deviceInfo.androidInfo;
+      final androidInfo = await _deviceInfo.androidInfo;
 
-        // Use Android ID (unique per device per app)
-        final androidId = androidInfo.id;
+      // Android ID is unique and persistent per device
+      // This will be the SAME even after app reinstall
+      final androidId = androidInfo.id;
 
-        // Create a clean device ID
-        final deviceId = 'TV-AND-${androidId.substring(0, 8).toUpperCase()}';
+      // Create readable device ID
+      final deviceId = 'TV-AND-${androidId.substring(0, 8).toUpperCase()}';
 
-        debugPrint('[SPLASH] 📱 Generated Android device ID: $deviceId');
-        debugPrint(
-          '[SPLASH] 📱 Device: ${androidInfo.brand} ${androidInfo.model}',
-        );
+      debugPrint('[SPLASH] 📱 Generated device ID: $deviceId');
+      debugPrint(
+        '[SPLASH] 📱 Device: ${androidInfo.brand} ${androidInfo.model}',
+      );
+      debugPrint('[SPLASH] 🔒 This ID survives app reinstall');
 
-        return deviceId;
-      } else {
-        // Fallback for other platforms
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final deviceId =
-            'TV-${timestamp.toString().substring(timestamp.toString().length - 8)}';
-
-        debugPrint('[SPLASH] 📱 Generated fallback device ID: $deviceId');
-
-        return deviceId;
-      }
+      return deviceId;
     } catch (e) {
-      debugPrint('[SPLASH] ⚠️ Error getting device info, using fallback: $e');
+      debugPrint('[SPLASH] ❌ Error getting device info: $e');
 
-      // Fallback: generate from timestamp
+      // Fallback: use timestamp (will change on reinstall)
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      return 'TV-${timestamp.toString().substring(timestamp.toString().length - 8)}';
+      final deviceId =
+          'TV-${timestamp.toString().substring(timestamp.toString().length - 8)}';
+
+      debugPrint('[SPLASH] ⚠️ Using fallback device ID: $deviceId');
+
+      return deviceId;
     }
   }
 }
