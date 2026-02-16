@@ -23,16 +23,34 @@ class RecentFocusNode extends FocusNode implements Comparable<RecentFocusNode> {
   FocusGroup group;
   static RecentFocusNode? root;
 
+  @override
+  int compareTo(RecentFocusNode other) {
+    // Example: compare by row, then by column
+    if (row != other.row) {
+      return row.compareTo(other.row);
+    }
+    return column.compareTo(other.column);
+  }
+
   int visited = -1;
   int row = -1, column = -1;
 
   RecentFocusNode({required this.group}) {
-    if (group == FocusGroup.root) root = this;
+    if (group == FocusGroup.root) {
+      // 🔥 IMPORTANT: Always update root when a new root is created
+      root = this;
+      debugPrint('🔴 NEW ROOT SET: ${identityHashCode(this)}');
+    }
   }
 
   @override
-  int compareTo(RecentFocusNode other) {
-    return (row - other.row) * 1000 + (column - other.column);
+  void dispose() {
+    // 🔥 Clear root reference if this was the root
+    if (group == FocusGroup.root && root == this) {
+      debugPrint('🔴 ROOT DISPOSED: ${identityHashCode(this)}');
+      root = null;
+    }
+    super.dispose();
   }
 }
 
@@ -264,6 +282,8 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
           break;
       }
     } else if (group == FocusGroup.button) {
+      debugPrint('🔵 BUTTON GROUP NAVIGATION TRIGGERED');
+
       final buttons = RecentFocusNode.root?.descendants
           .whereType<RecentFocusNode>()
           .where((n) => n.group == FocusGroup.button)
@@ -276,6 +296,7 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
 
       // 🔹 SINGLE BUTTON MODE (backward compatible)
       if (buttons.length == 1) {
+        debugPrint('🔵 SINGLE BUTTON MODE');
         switch (direction) {
           case TraversalDirection.up:
             debugPrint('SINGLE BUTTON ↑ → HEADER');
@@ -361,8 +382,8 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
           final node = currentNode as RecentFocusNode;
 
           /* =========================================
-     1️⃣ NORMAL LISTROW MOVE FIRST
-     ========================================= */
+           1️⃣ NORMAL LISTROW MOVE FIRST
+            ========================================= */
 
           final listRows = RecentFocusNode.root?.descendants
               .whereType<RecentFocusNode>()
@@ -391,8 +412,8 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
           }
 
           /* =========================================
-     2️⃣ LIVE HEADER (ONLY IF NO LISTROW ABOVE)
-     ========================================= */
+          2️⃣ LIVE HEADER (ONLY IF NO LISTROW ABOVE)
+          ========================================= */
 
           final liveHeaders = RecentFocusNode.root?.descendants
               .whereType<RecentFocusNode>()
@@ -413,8 +434,8 @@ class RecentFocusTraversalPolicy extends FocusTraversalPolicy {
           }
 
           /* =========================================
-     3️⃣ ORIGINAL ROOT BEHAVIOR
-     ========================================= */
+          3️⃣ ORIGINAL ROOT BEHAVIOR
+          ========================================= */
 
           if (node.row == 0) {
             final buttons = RecentFocusNode.root?.descendants

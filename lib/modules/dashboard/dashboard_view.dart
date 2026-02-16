@@ -31,6 +31,7 @@ class _DashboardViewState extends State<DashboardView>
 
   late DashboardCubit _dashboardCubit;
   bool _isInitialized = false;
+  bool _wasShowingError = false;
 
   List page = [
     const HomeView(),
@@ -126,6 +127,24 @@ class _DashboardViewState extends State<DashboardView>
                 color: AppColors.green,
               );
             }
+
+            // 🔥 Detect transition from error to normal state
+            final isShowingError =
+                !state.isNetworkConnected &&
+                state.tickerStatus == TickerStatus.error;
+
+            if (_wasShowingError && !isShowingError) {
+              // Just came back from error screen
+              debugPrint('🔴 RETURNING FROM ERROR - RESETTING FOCUS');
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  // Reset to header
+                  RecentFocusTraversalPolicy.moveToHeaderStart();
+                }
+              });
+            }
+
+            _wasShowingError = isShowingError;
           },
           builder: (context, state) {
             // Full-screen error when no internet and no cached data
@@ -168,8 +187,7 @@ class _DashboardViewState extends State<DashboardView>
                   ),
                 ),
 
-                // Network status overlay (like TVDisplayScreen)
-                // Shows when content is playing but internet is low/lost
+                // Network status overlay
                 if (!state.isNetworkConnected &&
                     state.tickerStatus == TickerStatus.success)
                   Positioned(
