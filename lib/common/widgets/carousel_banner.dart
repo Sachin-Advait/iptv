@@ -16,9 +16,17 @@ import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
 
 class CarouselBanner extends StatefulWidget {
   final String category;
+  final double? height;
+  final bool? showSearch;
   final Function(String)? onSearch;
 
-  const CarouselBanner({super.key, required this.category, this.onSearch});
+  const CarouselBanner({
+    super.key,
+    required this.category,
+    this.onSearch,
+    this.height,
+    this.showSearch,
+  });
 
   @override
   State<CarouselBanner> createState() => _CarouselBannerState();
@@ -144,7 +152,7 @@ class _CarouselBannerState extends State<CarouselBanner> {
                   CarouselSlider(
                     carouselController: _carouselController,
                     options: CarouselOptions(
-                      height: 300.heightMultiplier,
+                      height: widget.height ?? 300.heightMultiplier,
                       viewportFraction: 1.0,
                       autoPlay: true,
                       autoPlayInterval: const Duration(seconds: 5),
@@ -217,22 +225,22 @@ class _CarouselBannerState extends State<CarouselBanner> {
                       ),
                     ),
 
-                  // Netflix-style Search Bar (Top Right)
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: _isSearchExpanded
-                        ? ExpandedSearchBar(
-                            controller: _searchController,
-                            textFieldFocusNode: _textFieldFocusNode,
-                            onClose: _toggleSearch,
-                            onSubmit: _handleSearchSubmit,
-                          )
-                        : BannerSearchIcon(
-                            focusNode: _searchFocusNode,
-                            onToggle: _toggleSearch,
-                          ),
-                  ),
+                  if (widget.showSearch ?? false)
+                    Positioned(
+                      top: 16,
+                      right: 16,
+                      child: _isSearchExpanded
+                          ? ExpandedSearchBar(
+                              controller: _searchController,
+                              textFieldFocusNode: _textFieldFocusNode,
+                              onClose: _toggleSearch,
+                              onSubmit: _handleSearchSubmit,
+                            )
+                          : BannerSearchIcon(
+                              focusNode: _searchFocusNode,
+                              onToggle: _toggleSearch,
+                            ),
+                    ),
 
                   // Play Button (only if video exists for category)
                   if (video != null)

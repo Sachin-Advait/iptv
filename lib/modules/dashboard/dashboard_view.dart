@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/common/utils/focus_traversal.dart';
+import 'package:oman_tv/common/widgets/carousel_banner.dart';
 import 'package:oman_tv/common/widgets/flutter_toast.dart';
+import 'package:oman_tv/common/widgets/video_player.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/modules/annoucement/annoucement_view.dart';
 import 'package:oman_tv/modules/catch_up/catch_up_view.dart';
 import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
 import 'package:oman_tv/modules/dashboard/widgets/custom_error.dart';
 import 'package:oman_tv/modules/dashboard/widgets/header.dart';
+import 'package:oman_tv/modules/dashboard/widgets/network_overlay.dart';
 import 'package:oman_tv/modules/dashboard/widgets/ticker_state.dart';
 import 'package:oman_tv/modules/home/home_view.dart';
 import 'package:oman_tv/modules/live_tv/live_tv_view.dart';
@@ -194,6 +197,21 @@ class _DashboardViewState extends State<DashboardView>
               _stopTickerAutoScroll();
             }
 
+            final layout = state.dashboardData?.layout;
+
+            if (layout?.name == "Banner Layout") {
+              return _buildBannerLayout(state);
+            }
+
+            if (layout?.name == "Video Layout") {
+              return _buildVideoLayout(state);
+            }
+
+            if (layout?.name == "Banner and Ticker Layout") {
+              return _buildBannerWithTickerLayout(state);
+            }
+
+            // 🔁 Existing dashboard UI remains unchanged for other layouts
             return Stack(
               children: [
                 Focus(
@@ -201,6 +219,20 @@ class _DashboardViewState extends State<DashboardView>
                   descendantsAreFocusable: true,
                   child: Column(
                     children: <Widget>[
+                      if (tickerItems.isNotEmpty &&
+                          state
+                                  .dashboardData
+                                  ?.layout
+                                  .configJson
+                                  .tickerZone
+                                  ?.position !=
+                              'bottom')
+                        Expanded(
+                          child: NewsTicker(
+                            items: tickerItems,
+                            controller: _tickerScrollController,
+                          ),
+                        ),
                       FocusTraversalGroup(
                         policy: const RecentFocusTraversalPolicy(
                           group: FocusGroup.header,
@@ -216,19 +248,25 @@ class _DashboardViewState extends State<DashboardView>
                             ? const SizedBox()
                             : page[selectedTabIndex],
                       ),
-
-                      // 📰 Ticker UI only
-                      NewsTicker(
-                        items: tickerItems,
-                        controller: _tickerScrollController,
-                      ),
+                      if (tickerItems.isNotEmpty &&
+                          state
+                                  .dashboardData
+                                  ?.layout
+                                  .configJson
+                                  .tickerZone
+                                  ?.position ==
+                              'bottom')
+                        NewsTicker(
+                          items: tickerItems,
+                          controller: _tickerScrollController,
+                        ),
                     ],
                   ),
                 ),
 
                 if (!state.isNetworkConnected &&
                     state.dashboardStatus == DashboardStatus.success)
-                  _buildNetworkOverlay(),
+                  NetworkOverlay(dashboardCubit: _dashboardCubit),
               ],
             );
           },
@@ -252,36 +290,65 @@ class _DashboardViewState extends State<DashboardView>
     }
   }
 
-  Positioned _buildNetworkOverlay() {
-    return Positioned(
-      top: 20,
-      right: 20,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(10),
+  Widget _buildBannerLayout(DashboardState state) {
+    final bannerZone = state.dashboardData?.bannerZone ?? [];
+
+    // 🖼️ Case 2: Full screen banners
+    if (bannerZone.isNotEmpty) {
+      return Scaffold(
+        body: CarouselBanner(
+          category: bannerZone.first.category ?? "",
+          height: double.infinity,
+          showSearch: false,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.wifi_off, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            const Text(
-              'No Internet Connection',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+      );
+    }
+
+    return const Scaffold(body: Center(child: Text("No media available")));
+  }
+
+  Widget _buildVideoLayout(DashboardState state) {
+    final videoZone = state.dashboardData?.videoZone ?? [];
+
+    if (videoZone.isNotEmpty && videoZone.first.videoUrl != null) {
+      return VideoView(videoUrl: videoZone.first.videoUrl!);
+    }
+
+    return const Scaffold(body: Center(child: Text("No media available")));
+  }
+
+  Widget _buildBannerWithTickerLayout(DashboardState state) {
+    final bannerZone = state.dashboardData?.bannerZone ?? [];
+    final tickerItems = state.dashboardData?.tickerZone ?? [];
+
+    return Scaffold(
+      body: Column(
+        children: [
+          if (tickerItems.isNotEmpty &&
+              state.dashboardData?.layout.configJson.tickerZone?.position !=
+                  'bottom')
+            Expanded(
+              child: NewsTicker(
+                items: tickerItems,
+                controller: _tickerScrollController,
               ),
             ),
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: () => _dashboardCubit.manualRetry(),
-              child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+
+          CarouselBanner(
+            category: bannerZone.first.category ?? "",
+            height: MediaQuery.of(context).size.height * .91,
+            showSearch: false,
+          ),
+          if (tickerItems.isNotEmpty &&
+              state.dashboardData?.layout.configJson.tickerZone?.position ==
+                  'bottom')
+            Expanded(
+              child: NewsTicker(
+                items: tickerItems,
+                controller: _tickerScrollController,
+              ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
