@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:oman_tv/common/utils/connectivity_aware_mixin.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
@@ -13,30 +14,25 @@ class NewsTicker extends StatefulWidget {
   State<NewsTicker> createState() => _NewsTickerState();
 }
 
-class _NewsTickerState extends State<NewsTicker> {
+class _NewsTickerState extends State<NewsTicker>
+    with ConnectivityAwareMixin<NewsTicker> {
+  @override
+  void onConnectivityRestored() {
+    final currentState = context.read<DashboardCubit>().state;
+    if (currentState.tickerStatus == TickerStatus.error &&
+        currentState.isNetworkConnected == false) {
+      debugPrint('✅ Auto-retrying services after reconnection...');
+      context.read<DashboardCubit>().fetchTickerData();
+    }
+  }
+
   late ScrollController _scrollController;
   Timer? _scrollTimer;
-  Timer? _errorPollTimer;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-  }
-
-  void _startErrorPolling() {
-    if (_errorPollTimer?.isActive == true) return; // avoid duplicate timers
-
-    _errorPollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      debugPrint('🔁 Polling ticker API due to error...');
-      context.read<DashboardCubit>().fetchTickerData();
-      // 👆 replace with your actual API method
-    });
-  }
-
-  void _stopErrorPolling() {
-    _errorPollTimer?.cancel();
-    _errorPollTimer = null;
   }
 
   void _startAutoScroll() {
@@ -65,20 +61,12 @@ class _NewsTickerState extends State<NewsTicker> {
   void dispose() {
     _scrollTimer?.cancel();
     _scrollController.dispose();
-    _errorPollTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<DashboardCubit, DashboardState>(
-      listener: (context, state) {
-        if (state.tickerStatus == TickerStatus.error) {
-          _startErrorPolling();
-        } else {
-          _stopErrorPolling();
-        }
-      },
+    return BlocBuilder<DashboardCubit, DashboardState>(
       builder: (context, state) {
         // Start/stop auto-scroll based on ticker status
         if (state.tickerStatus == TickerStatus.success &&

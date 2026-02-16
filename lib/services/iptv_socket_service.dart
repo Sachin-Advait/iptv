@@ -51,6 +51,7 @@ class IptvSocketService {
     ) {
       if (isConnected) {
         debugPrint('[IPTV-WS] 🌐 Internet restored - auto-reconnecting');
+        _reconnectAttempts = 0;
         if (!_isWebSocketConnected && _currentTvId != null) {
           Future.delayed(const Duration(seconds: 2), () {
             if (_connectivityService.isConnected) {

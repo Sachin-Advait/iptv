@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
+import 'package:oman_tv/configs/theme/app_theme.dart';
 
 class CustomError extends StatelessWidget {
   const CustomError({
@@ -62,8 +63,11 @@ class CustomError extends StatelessWidget {
               const SizedBox(height: 30),
               ElevatedButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry Now'),
+                icon: const Icon(Icons.refresh, color: AppColors.white),
+                label: Text(
+                  'Retry Now',
+                  style: context.medium.copyWith(color: AppColors.white),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(

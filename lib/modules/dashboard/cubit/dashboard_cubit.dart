@@ -84,16 +84,6 @@ class DashboardCubit extends Cubit<DashboardState> {
     // Reset any error messages
     emit(state.copyWith(errorMessage: null));
 
-    // Reconnect WebSocket if needed
-    if (!_wsManager.isConnected && _currentTvId != null) {
-      debugPrint('[DASHBOARD] 🔄 Reconnecting WebSocket');
-      Future.delayed(const Duration(seconds: 2), () {
-        if (_connectivityService.isConnected) {
-          _wsManager.reconnect();
-        }
-      });
-    }
-
     // Refresh data based on current state
     Future.delayed(const Duration(seconds: 3), () {
       if (_connectivityService.isConnected) {
@@ -217,6 +207,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         state.copyWith(
           tickerStatus: TickerStatus.error,
           errorMessage: 'No internet connection',
+          isNetworkConnected: false,
         ),
       );
       return;
