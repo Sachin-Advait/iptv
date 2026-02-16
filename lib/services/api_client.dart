@@ -25,10 +25,10 @@ class ApiClient {
 
   // Retry configuration for production kiosk app
   final RetryOptions _retryOptions = const RetryOptions(
-    maxAttempts: 3,
+    maxAttempts: 5,
     delayFactor: Duration(seconds: 2),
     randomizationFactor: 0.25,
-    maxDelay: Duration(seconds: 10),
+    maxDelay: Duration(seconds: 15),
   );
 
   ApiClient({required Dio dio}) : _dio = dio;
