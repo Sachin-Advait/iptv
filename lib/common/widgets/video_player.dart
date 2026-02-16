@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_multicast_lock/flutter_multicast_lock.dart';
 import 'package:flutter_vlc_player_16kb/flutter_vlc_player.dart';
+import 'package:oman_tv/configs/theme/app_theme.dart';
 
 class VideoView extends StatefulWidget {
   final String videoUrl;
@@ -29,41 +30,72 @@ class _VideoViewState extends State<VideoView> {
   Future<void> _startPlayback() async {
     final url = widget.videoUrl.trim();
 
-    // Acquire multicast lock only for multicast/udp streams (Wi-Fi use case)
-    if (_isUdp(url)) {
-      try {
-        await _multicastLock.acquireMulticastLock();
-        _multicastLockHeld = true;
-      } catch (e) {
-        // If lock fails, playback may still work on Ethernet, but can fail on Wi-Fi.
-
-        _status = "Warning: multicast lock not acquired: $e";
-        if (mounted) setState(() {});
-        throw Exception('2. App crashed due to $e');
+    try {
+      // Acquire multicast lock only for multicast/udp streams (Wi-Fi use case)
+      if (_isUdp(url)) {
+        try {
+          await _multicastLock.acquireMulticastLock();
+          _multicastLockHeld = true;
+        } catch (e) {
+          _setError("Multicast permission denied. Cannot play this stream.");
+          return;
+        }
       }
+
+      final options = VlcPlayerOptions(
+        advanced: VlcAdvancedOptions([VlcAdvancedOptions.networkCaching(300)]),
+        extras: [
+          '--clock-jitter=0',
+          '--clock-synchro=0',
+          '--no-drop-late-frames',
+          '--no-skip-frames',
+        ],
+      );
+
+      final ctrl = VlcPlayerController.network(
+        url,
+        hwAcc: HwAcc.auto,
+        autoPlay: true,
+        options: options,
+      );
+
+      ctrl.addListener(() {
+        final value = ctrl.value;
+
+        if (!mounted) return;
+
+        if (value.hasError) {
+          final error = value.errorDescription;
+
+          if (error.contains("403") ||
+              error.toLowerCase().contains("forbidden")) {
+            _setError(
+              "⛔ Access denied (403). You are not authorized to play this stream.",
+            );
+          } else if (error.toLowerCase().contains("404")) {
+            _setError("❌ Stream not found (404).");
+          } else {
+            _setError("Playback error: $error");
+          }
+        }
+      });
+
+      setState(() {
+        _controller = ctrl;
+        _status = "Loading stream...";
+      });
+    } catch (e) {
+      _setError("❌ Failed to start playback: $e");
     }
+  }
 
-    // Lower network caching for lower latency (tune per network quality)
-    // final options = VlcPlayerOptions();
-    final options = VlcPlayerOptions(
-      advanced: VlcAdvancedOptions([VlcAdvancedOptions.networkCaching(300)]),
-      extras: [
-        '--clock-jitter=0',
-        '--clock-synchro=0',
-        '--no-drop-late-frames',
-        '--no-skip-frames',
-      ],
-    );
-    final ctrl = VlcPlayerController.network(
-      url,
-      hwAcc: HwAcc.auto,
-      autoPlay: true,
-      options: options,
-    );
-
+  void _setError(String message) {
+    debugPrint("[VIDEO ERROR] $message");
     setState(() {
-      _controller = ctrl;
-      _status = "Playing";
+      _status = message;
+      _controller?.stop();
+      _controller?.dispose();
+      _controller = null;
     });
   }
 
@@ -87,9 +119,27 @@ class _VideoViewState extends State<VideoView> {
   @override
   Widget build(BuildContext context) {
     final ctrl = _controller;
+
     return Scaffold(
+      backgroundColor: Colors.black,
       body: ctrl == null
-          ? Center(child: Text(_status))
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      _status,
+                      textAlign: TextAlign.center,
+                      style: context.semiBold.copyWith(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            )
           : SizedBox.expand(
               child: VlcPlayer(
                 controller: ctrl,
