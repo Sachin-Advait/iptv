@@ -39,7 +39,6 @@ class RecentFocusNode extends FocusNode implements Comparable<RecentFocusNode> {
     if (group == FocusGroup.root) {
       // 🔥 IMPORTANT: Always update root when a new root is created
       root = this;
-      debugPrint('🔴 NEW ROOT SET: ${identityHashCode(this)}');
     }
   }
 

@@ -1,12 +1,10 @@
 // ignore_for_file: constant_identifier_names
 
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:oman_tv/common/constants/api_constants.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
-import 'package:oman_tv/models/layout_model.dart';
 import 'package:oman_tv/services/connectivity_service.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
@@ -33,7 +31,6 @@ class IptvSocketService {
 
   // Callbacks
   Function()? onTvUpdateReceived;
-  Function(LayoutModel)? onLayoutUpdateReceived;
   Function()? onConnectionSuccess;
   Function(String)? onConnectionError;
 
@@ -123,7 +120,7 @@ class IptvSocketService {
 
           // Subscribe to TV update topic
           _stompClient?.subscribe(
-            destination: '/topic/tv-update/$tvId',
+            destination: '/topic/tv-layout/$tvId',
             callback: (StompFrame frame) {
               _lastMessageReceived = DateTime.now();
               _reconnectAttempts = 0;
@@ -132,36 +129,6 @@ class IptvSocketService {
 
               // Trigger callback when TV update is received
               onTvUpdateReceived?.call();
-            },
-          );
-
-          // Subscribe to layout update topic
-          _stompClient?.subscribe(
-            destination: '/topic/tv-layout/$tvId',
-            callback: (StompFrame frame) {
-              _lastMessageReceived = DateTime.now();
-              _reconnectAttempts = 0;
-
-              debugPrint('[IPTV-WS] 🎨 Layout update received for TV: $tvId');
-
-              // Parse layout data
-              if (frame.body != null && frame.body!.isNotEmpty) {
-                try {
-                  final Map<String, dynamic> layoutJson = json.decode(
-                    frame.body!,
-                  );
-                  final layout = LayoutModel.fromJson(layoutJson);
-
-                  debugPrint(
-                    '[IPTV-WS] 📋 Layout parsed: ${layout.toString()}',
-                  );
-
-                  // Trigger callback with layout data
-                  onLayoutUpdateReceived?.call(layout);
-                } catch (e) {
-                  debugPrint('[IPTV-WS] ❌ Error parsing layout: $e');
-                }
-              }
             },
           );
 

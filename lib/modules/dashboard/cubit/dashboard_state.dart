@@ -1,21 +1,18 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 part of 'dashboard_cubit.dart';
 
-enum TickerStatus { initial, loading, success, error }
+enum DashboardStatus { initial, loading, success, error }
 
 class DashboardState extends Equatable {
-  final TickerStatus tickerStatus;
-  final List<String> tickerData;
-  final LayoutModel? currentLayout;
+  final DashboardStatus dashboardStatus;
+  final DashboardDetails? dashboardData;
   final String? errorMessage;
   final bool isNetworkConnected;
   final ConnectivityResult? connectivityStatus;
   final bool wasNetworkRestored;
 
   const DashboardState({
-    this.tickerStatus = TickerStatus.initial,
-    this.tickerData = const [],
-    this.currentLayout,
+    this.dashboardStatus = DashboardStatus.initial,
+    this.dashboardData,
     this.errorMessage,
     this.isNetworkConnected = true,
     this.connectivityStatus,
@@ -23,18 +20,16 @@ class DashboardState extends Equatable {
   });
 
   DashboardState copyWith({
-    TickerStatus? tickerStatus,
-    List<String>? tickerData,
-    LayoutModel? currentLayout,
+    DashboardStatus? dashboardStatus,
+    DashboardDetails? dashboardData,
     String? errorMessage,
     bool? isNetworkConnected,
     ConnectivityResult? connectivityStatus,
     bool? wasNetworkRestored,
   }) {
     return DashboardState(
-      tickerStatus: tickerStatus ?? this.tickerStatus,
-      tickerData: tickerData ?? this.tickerData,
-      currentLayout: currentLayout ?? this.currentLayout,
+      dashboardStatus: dashboardStatus ?? this.dashboardStatus,
+      dashboardData: dashboardData ?? this.dashboardData,
       errorMessage: errorMessage,
       isNetworkConnected: isNetworkConnected ?? this.isNetworkConnected,
       connectivityStatus: connectivityStatus ?? this.connectivityStatus,
@@ -44,9 +39,8 @@ class DashboardState extends Equatable {
 
   @override
   List<Object?> get props => [
-    tickerStatus,
-    tickerData,
-    currentLayout,
+    dashboardStatus,
+    dashboardData,
     errorMessage,
     isNetworkConnected,
     connectivityStatus,

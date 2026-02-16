@@ -8,11 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/common/constants/api_constants.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
-import 'package:oman_tv/models/layout_model.dart';
-import 'package:oman_tv/models/ticker_model.dart';
+import 'package:oman_tv/models/dashboard_model.dart';
 import 'package:oman_tv/services/api_client.dart';
 import 'package:oman_tv/services/connectivity_service.dart';
 import 'package:oman_tv/services/iptv_socket_service.dart';
+import 'package:oman_tv/services/session_manager.dart';
 
 part 'dashboard_state.dart';
 
@@ -42,8 +42,6 @@ class DashboardCubit extends Cubit<DashboardState> {
   void _setupWebSocketCallbacks() {
     _wsManager.onTvUpdateReceived = _handleTvUpdate;
 
-    _wsManager.onLayoutUpdateReceived = _handleLayoutUpdate;
-
     _wsManager.onConnectionSuccess = () async {
       debugPrint('[IPTV-WS] ✅ WebSocket connected successfully');
 
@@ -51,8 +49,9 @@ class DashboardCubit extends Cubit<DashboardState> {
       emit(state.copyWith(errorMessage: null));
 
       // Refresh data after successful connection
-      if (_currentTvId != null && state.tickerStatus != TickerStatus.loading) {
-        await refreshTickerData();
+      if (_currentTvId != null &&
+          state.dashboardStatus != DashboardStatus.loading) {
+        await refreshDashboardData();
       }
     };
 
@@ -87,30 +86,24 @@ class DashboardCubit extends Cubit<DashboardState> {
     // Refresh data based on current state
     Future.delayed(const Duration(seconds: 3), () {
       if (_connectivityService.isConnected) {
-        if (state.tickerStatus == TickerStatus.error) {
+        if (state.dashboardStatus == DashboardStatus.error) {
           debugPrint('[DASHBOARD] 🔄 Reloading from error state');
-          fetchTickerData();
-        } else if (state.tickerStatus == TickerStatus.success) {
+          fetchDashboardData();
+        } else if (state.dashboardStatus == DashboardStatus.success) {
           debugPrint('[DASHBOARD] 🔄 Refreshing data');
-          refreshTickerData();
+          refreshDashboardData();
         }
       }
     });
   }
 
-  void _handleLayoutUpdate(LayoutModel layout) {
-    debugPrint('[DASHBOARD] 🎨 Layout update received');
-    debugPrint('[DASHBOARD] 📋 Layout: ${layout.toString()}');
+  void _handleTvUpdate() {
+    debugPrint('[DASHBOARD] 📺 TV update received - refreshing ticker data');
 
-    // Update state with new layout
-    emit(state.copyWith(currentLayout: layout));
-
-    // Optionally refresh ticker data if ticker is enabled
-    if (layout.tickerEnabled &&
-        state.tickerStatus != TickerStatus.loading &&
+    // Refresh ticker data when TV update is received
+    if (state.dashboardStatus != DashboardStatus.loading &&
         _connectivityService.isConnected) {
-      debugPrint('[DASHBOARD] 🔄 Ticker enabled - refreshing data');
-      refreshTickerData();
+      refreshDashboardData();
     }
   }
 
@@ -165,9 +158,9 @@ class DashboardCubit extends Cubit<DashboardState> {
 
           // Only refresh if this is the first check after timeout
           if (intervalsSinceLastMessage == intervalsSinceTimeout &&
-              state.tickerStatus == TickerStatus.success) {
+              state.dashboardStatus == DashboardStatus.success) {
             debugPrint('[DASHBOARD] 🔄 MESSAGE_TIMEOUT reached - refreshing');
-            refreshTickerData();
+            refreshDashboardData();
           }
         }
       }
@@ -179,110 +172,91 @@ class DashboardCubit extends Cubit<DashboardState> {
 
     _dataRefreshTimer = Timer.periodic(DATA_REFRESH_INTERVAL, (timer) async {
       if (_connectivityService.isConnected &&
-          state.tickerStatus != TickerStatus.loading &&
-          state.tickerStatus == TickerStatus.success) {
+          state.dashboardStatus != DashboardStatus.loading &&
+          state.dashboardStatus == DashboardStatus.success) {
         debugPrint('[DASHBOARD] ⏰ Periodic data refresh');
-        await refreshTickerData();
+        await refreshDashboardData();
       } else {
         debugPrint('[DASHBOARD] ⏸️ Skipping refresh - no network or loading');
       }
     });
   }
 
-  void _handleTvUpdate() {
-    debugPrint('[DASHBOARD] 📺 TV update received - refreshing ticker data');
-
-    // Refresh ticker data when TV update is received
-    if (state.tickerStatus != TickerStatus.loading &&
-        _connectivityService.isConnected) {
-      refreshTickerData();
-    }
+  Future<void> fetchDashboardData() async {
+    return _loadDashboardData(isRefresh: false);
   }
 
-  Future<void> fetchTickerData() async {
-    // Network check is already handled by ApiClient
+  Future<void> refreshDashboardData() async {
+    return _loadDashboardData(isRefresh: true);
+  }
+
+  Future<void> _loadDashboardData({required bool isRefresh}) async {
     if (!_connectivityService.isConnected) {
-      debugPrint('[DASHBOARD] ⏸️ Skipping data load - no network');
-      emit(
-        state.copyWith(
-          tickerStatus: TickerStatus.error,
-          errorMessage: 'No internet connection',
-          isNetworkConnected: false,
-        ),
+      debugPrint(
+        '[DASHBOARD] ⏸️ Skipping ${isRefresh ? 'refresh' : 'data load'} - no network',
       );
+
+      if (!isRefresh) {
+        emit(
+          state.copyWith(
+            dashboardStatus: DashboardStatus.error,
+            errorMessage: 'No internet connection',
+            isNetworkConnected: false,
+          ),
+        );
+      }
       return;
     }
 
-    emit(
-      state.copyWith(tickerStatus: TickerStatus.loading, errorMessage: null),
-    );
+    if (!isRefresh) {
+      emit(
+        state.copyWith(
+          dashboardStatus: DashboardStatus.loading,
+          errorMessage: null,
+        ),
+      );
+    } else {
+      if (state.dashboardStatus == DashboardStatus.loading) {
+        debugPrint('[DASHBOARD] ⏸️ Already loading');
+        return;
+      }
+    }
 
     try {
-      // ApiClient already has retry logic built-in
-      final response = await _apiClient.getApi(ApiConstants.tickers);
+      final response = await _apiClient.getApi(
+        ApiConstants.layout,
+        queryParameters: {"deviceId": SessionManager.getDeviceId()},
+      );
 
       if (response != null && response.statusCode == 200) {
-        final tickerModel = TickerModel.fromJson(response.data);
+        final dashboardModel = DashboardModel.fromJson(response.data);
 
         emit(
           state.copyWith(
-            tickerStatus: TickerStatus.success,
-            tickerData: tickerModel.data,
+            dashboardStatus: DashboardStatus.success,
+            dashboardData: dashboardModel.data,
             errorMessage: null,
           ),
         );
 
-        debugPrint('[DASHBOARD] ✅ Ticker data loaded successfully');
+        debugPrint(
+          '[DASHBOARD] ✅ Dashboard data ${isRefresh ? 'refreshed' : 'loaded'} successfully',
+        );
       } else {
         throw Exception('Failed to load ticker data');
       }
     } catch (e, stack) {
-      debugPrint('[DASHBOARD] ❌ Failed to load ticker data: $e');
+      debugPrint('[DASHBOARD] ❌ ${isRefresh ? 'Refresh' : 'Load'} failed: $e');
       debugPrint(stack.toString());
 
-      emit(
-        state.copyWith(
-          tickerStatus: TickerStatus.error,
-          errorMessage: 'Failed to load ticker data',
-        ),
-      );
-    }
-  }
-
-  Future<void> refreshTickerData() async {
-    if (!_connectivityService.isConnected) {
-      debugPrint('[DASHBOARD] ⏸️ Skipping refresh - no network');
-      return;
-    }
-
-    if (state.tickerStatus == TickerStatus.loading) {
-      debugPrint('[DASHBOARD] ⏸️ Already loading');
-      return;
-    }
-
-    try {
-      // ApiClient handles retry automatically
-      final response = await _apiClient.getApi(ApiConstants.tickers);
-
-      if (response != null && response.statusCode == 200) {
-        final tickerModel = TickerModel.fromJson(response.data);
-
+      if (!isRefresh) {
         emit(
           state.copyWith(
-            tickerStatus: TickerStatus.success,
-            tickerData: tickerModel.data,
-            errorMessage: null,
+            dashboardStatus: DashboardStatus.error,
+            errorMessage: 'Failed to load ticker data',
           ),
         );
-
-        debugPrint('[DASHBOARD] ✅ Ticker data refreshed successfully');
       }
-    } catch (e, stack) {
-      debugPrint('[DASHBOARD] ⚠️ Refresh error: $e');
-      debugPrint(stack.toString());
-
-      // Keep current state on error (silent failure)
-      // Don't emit error state during refresh to avoid flickering
     }
   }
 
@@ -299,8 +273,8 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
 
     // Refresh data if we have it
-    if (state.tickerStatus == TickerStatus.success) {
-      await refreshTickerData();
+    if (state.dashboardStatus == DashboardStatus.success) {
+      await refreshDashboardData();
     }
 
     // Reconnect WebSocket if needed
@@ -325,14 +299,14 @@ class DashboardCubit extends Cubit<DashboardState> {
     _wsManager.resetAttempts();
 
     // Refresh or reload data
-    if (state.tickerStatus == TickerStatus.success) {
-      await refreshTickerData();
+    if (state.dashboardStatus == DashboardStatus.success) {
+      await refreshDashboardData();
 
       if (_currentTvId != null) {
         await _wsManager.reconnect();
       }
     } else {
-      await fetchTickerData();
+      await fetchDashboardData();
     }
   }
 

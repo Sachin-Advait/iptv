@@ -32,6 +32,8 @@ class _DashboardViewState extends State<DashboardView>
   late DashboardCubit _dashboardCubit;
   bool _isInitialized = false;
   bool _wasShowingError = false;
+  late ScrollController _tickerScrollController;
+  Timer? _tickerTimer;
 
   List page = [
     const HomeView(),
@@ -50,11 +52,41 @@ class _DashboardViewState extends State<DashboardView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    _tickerScrollController = ScrollController();
     _dashboardCubit = context.read<DashboardCubit>();
     FocusListener.add(this);
 
-    // Initialize dashboard with WebSocket and data fetching
     _initializeDashboard();
+  }
+
+  void _startTickerAutoScroll() {
+    _tickerTimer?.cancel();
+
+    _tickerTimer = Timer.periodic(const Duration(milliseconds: 30), (_) {
+      if (_tickerScrollController.hasClients) {
+        final max = _tickerScrollController.position.maxScrollExtent;
+        final current = _tickerScrollController.offset;
+
+        if (current >= max) {
+          _tickerScrollController.jumpTo(0);
+        } else {
+          _tickerScrollController.jumpTo(current + 2);
+        }
+      }
+    });
+  }
+
+  void _stopTickerAutoScroll() {
+    _tickerTimer?.cancel();
+  }
+
+  @override
+  void dispose() {
+    _tickerTimer?.cancel();
+    _tickerScrollController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    FocusListener.remove(this);
+    super.dispose();
   }
 
   Future<void> _initializeDashboard() async {
@@ -68,9 +100,6 @@ class _DashboardViewState extends State<DashboardView>
 
       // Initialize WebSocket connection
       await _dashboardCubit.initializeWebSocket(tvId);
-
-      // Fetch initial ticker data
-      await _dashboardCubit.fetchTickerData();
 
       _isInitialized = true;
       debugPrint('[DASHBOARD] ✅ Dashboard initialized successfully');
@@ -104,13 +133,6 @@ class _DashboardViewState extends State<DashboardView>
   }
 
   @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    FocusListener.remove(this);
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
@@ -131,7 +153,7 @@ class _DashboardViewState extends State<DashboardView>
             // 🔥 Detect transition from error to normal state
             final isShowingError =
                 !state.isNetworkConnected &&
-                state.tickerStatus == TickerStatus.error;
+                state.dashboardStatus == DashboardStatus.error;
 
             if (_wasShowingError && !isShowingError) {
               // Just came back from error screen
@@ -147,9 +169,11 @@ class _DashboardViewState extends State<DashboardView>
             _wasShowingError = isShowingError;
           },
           builder: (context, state) {
-            // Full-screen error when no internet and no cached data
+            // 🔴 Full-screen error
             if (!state.isNetworkConnected &&
-                state.tickerStatus == TickerStatus.error) {
+                state.dashboardStatus == DashboardStatus.error) {
+              _stopTickerAutoScroll();
+
               return CustomError(
                 message: state.errorMessage ?? 'No internet connection',
                 isNetworkError: true,
@@ -157,7 +181,20 @@ class _DashboardViewState extends State<DashboardView>
               );
             }
 
-            // Normal UI with optional network indicator overlay
+            // 🟢 Normal UI
+            final tickerItems = state.dashboardData?.tickerZone ?? [];
+
+            if (state.dashboardStatus == DashboardStatus.success &&
+                tickerItems.isNotEmpty) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _startTickerAutoScroll();
+              });
+            } else {
+              _stopTickerAutoScroll();
+            }
+
+            final showTicker = state.dashboardStatus == DashboardStatus.success;
+
             return Stack(
               children: [
                 Focus(
@@ -165,7 +202,6 @@ class _DashboardViewState extends State<DashboardView>
                   descendantsAreFocusable: true,
                   child: Column(
                     children: <Widget>[
-                      // Header
                       FocusTraversalGroup(
                         policy: const RecentFocusTraversalPolicy(
                           group: FocusGroup.header,
@@ -176,62 +212,27 @@ class _DashboardViewState extends State<DashboardView>
                         ),
                       ),
 
-                      // Content
                       Expanded(
                         child: isUserSelected
                             ? const SizedBox()
                             : page[selectedTabIndex],
                       ),
-                      NewsTicker(),
+
+                      // 📰 Ticker UI only
+                      if (showTicker)
+                        NewsTicker(
+                          items: tickerItems,
+                          controller: _tickerScrollController,
+                        )
+                      else
+                        const SizedBox(),
                     ],
                   ),
                 ),
 
-                // Network status overlay
                 if (!state.isNetworkConnected &&
-                    state.tickerStatus == TickerStatus.success)
-                  Positioned(
-                    top: 20,
-                    right: 20,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.wifi_off,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'No Internet Connection',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          InkWell(
-                            onTap: () => _dashboardCubit.manualRetry(),
-                            child: const Icon(
-                              Icons.refresh,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                    state.dashboardStatus == DashboardStatus.success)
+                  _buildNetworkOverlay(),
               ],
             );
           },
@@ -253,5 +254,39 @@ class _DashboardViewState extends State<DashboardView>
         selectedTabIndex = column;
       });
     }
+  }
+
+  Positioned _buildNetworkOverlay() {
+    return Positioned(
+      top: 20,
+      right: 20,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.wifi_off, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            const Text(
+              'No Internet Connection',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () => _dashboardCubit.manualRetry(),
+              child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
