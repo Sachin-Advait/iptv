@@ -6,10 +6,12 @@ import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
 import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
 import 'package:oman_tv/modules/splash/bloc/splash_bloc.dart';
 import 'package:oman_tv/services/api_client.dart';
+import 'package:oman_tv/services/connectivity_service.dart';
 
 final getIt = GetIt.instance;
 
 void getItSetup() {
+  getIt.registerLazySingleton<ConnectivityService>(() => ConnectivityService());
   final dio = Dio(
     BaseOptions(
       baseUrl: ApiConstants.baseUrl,

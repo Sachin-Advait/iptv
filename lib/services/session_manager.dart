@@ -9,6 +9,18 @@ class SessionManager {
   static final _userStorage = GetStorage();
 
   static const String _deviceId = 'DeviceId ID';
+  static const String _tvId = 'tv ID';
+
+  static Future<void> saveTvId(String tvId) async {
+    await _userStorage.write(_tvId, tvId);
+    debugPrint("TvId saved ==> $tvId.");
+  }
+
+  static String getTvId() {
+    String TvId = _userStorage.read<String?>(_tvId) ?? '';
+    debugPrint("TvId Id ==> $TvId.");
+    return TvId;
+  }
 
   static Future<void> saveDeviceId(String deviceId) async {
     await _userStorage.write(_deviceId, deviceId);

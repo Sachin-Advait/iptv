@@ -1,15 +1,22 @@
 // ignore_for_file: constant_identifier_names
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:oman_tv/common/constants/api_constants.dart';
+import 'package:oman_tv/common/utils/get_it.dart';
+import 'package:oman_tv/models/layout_model.dart';
+import 'package:oman_tv/services/connectivity_service.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 class IptvSocketService {
   StompClient? _stompClient;
   Timer? _reconnectionTimer;
   Timer? _connectionTimeoutTimer;
+  StreamSubscription<bool>? _connectivitySubscription;
+
+  final ConnectivityService _connectivityService = getIt<ConnectivityService>();
 
   DateTime? _lastMessageReceived;
   DateTime? _lastHeartbeatReceived;
@@ -17,7 +24,6 @@ class IptvSocketService {
   bool _isWebSocketConnected = false;
   bool _isConnecting = false;
   bool _shouldReconnect = true;
-  bool _isNetworkAvailable = true;
 
   // Configuration
   static const int MAX_RECONNECT_ATTEMPTS = 20;
@@ -27,6 +33,7 @@ class IptvSocketService {
 
   // Callbacks
   Function()? onTvUpdateReceived;
+  Function(LayoutModel)? onLayoutUpdateReceived;
   Function()? onConnectionSuccess;
   Function(String)? onConnectionError;
 
@@ -34,13 +41,37 @@ class IptvSocketService {
   DateTime? get lastMessageReceived => _lastMessageReceived;
   DateTime? get lastHeartbeatReceived => _lastHeartbeatReceived;
 
-  void updateNetworkStatus(bool isAvailable) {
-    _isNetworkAvailable = isAvailable;
+  IptvSocketService() {
+    _setupConnectivityListener();
+  }
+
+  void _setupConnectivityListener() {
+    _connectivitySubscription = _connectivityService.connectionStream.listen((
+      isConnected,
+    ) {
+      if (isConnected) {
+        debugPrint('[IPTV-WS] 🌐 Internet restored - auto-reconnecting');
+        if (!_isWebSocketConnected && _currentTvId != null) {
+          Future.delayed(const Duration(seconds: 2), () {
+            if (_connectivityService.isConnected) {
+              reconnect();
+            }
+          });
+        }
+      } else {
+        debugPrint('[IPTV-WS] 📵 Internet lost');
+      }
+    });
   }
 
   Future<void> connect(String tvId) async {
-    if (_isConnecting || !_isNetworkAvailable) {
-      debugPrint('[IPTV-WS] ⏸️ Already connecting or no network');
+    if (_isConnecting) {
+      debugPrint('[IPTV-WS] ⏸️ Already connecting');
+      return;
+    }
+
+    if (!_connectivityService.isConnected) {
+      debugPrint('[IPTV-WS] ⏸️ No network - skipping connection');
       return;
     }
 
@@ -103,6 +134,36 @@ class IptvSocketService {
             },
           );
 
+          // Subscribe to layout update topic
+          _stompClient?.subscribe(
+            destination: '/topic/tv-layout/$tvId',
+            callback: (StompFrame frame) {
+              _lastMessageReceived = DateTime.now();
+              _reconnectAttempts = 0;
+
+              debugPrint('[IPTV-WS] 🎨 Layout update received for TV: $tvId');
+
+              // Parse layout data
+              if (frame.body != null && frame.body!.isNotEmpty) {
+                try {
+                  final Map<String, dynamic> layoutJson = json.decode(
+                    frame.body!,
+                  );
+                  final layout = LayoutModel.fromJson(layoutJson);
+
+                  debugPrint(
+                    '[IPTV-WS] 📋 Layout parsed: ${layout.toString()}',
+                  );
+
+                  // Trigger callback with layout data
+                  onLayoutUpdateReceived?.call(layout);
+                } catch (e) {
+                  debugPrint('[IPTV-WS] ❌ Error parsing layout: $e');
+                }
+              }
+            },
+          );
+
           // Subscribe to heartbeat topic (optional)
           _stompClient?.subscribe(
             destination: '/topic/heartbeat',
@@ -160,7 +221,7 @@ class IptvSocketService {
   }
 
   Future<void> reconnect() async {
-    if (!_isNetworkAvailable) {
+    if (!_connectivityService.isConnected) {
       debugPrint('[IPTV-WS] ⏸️ Cannot reconnect - no network');
       return;
     }
@@ -175,8 +236,13 @@ class IptvSocketService {
   }
 
   void _scheduleReconnection() {
-    if (!_shouldReconnect || _isConnecting || !_isNetworkAvailable) {
+    if (!_shouldReconnect || _isConnecting) {
       debugPrint('[IPTV-WS] ⏸️ Skipping reconnection schedule');
+      return;
+    }
+
+    if (!_connectivityService.isConnected) {
+      debugPrint('[IPTV-WS] ⏸️ No network - will auto-reconnect when restored');
       return;
     }
 
@@ -185,7 +251,7 @@ class IptvSocketService {
       // Reset attempts after a longer delay
       Future.delayed(const Duration(minutes: 5), () {
         _reconnectAttempts = 0;
-        if (_shouldReconnect && _isNetworkAvailable) {
+        if (_shouldReconnect && _connectivityService.isConnected) {
           _scheduleReconnection();
         }
       });
@@ -205,7 +271,7 @@ class IptvSocketService {
     _reconnectionTimer = Timer(delay, () async {
       if (_shouldReconnect &&
           !_isConnecting &&
-          _isNetworkAvailable &&
+          _connectivityService.isConnected &&
           _currentTvId != null) {
         await connect(_currentTvId!);
       }
@@ -220,6 +286,7 @@ class IptvSocketService {
     _shouldReconnect = false;
     _reconnectionTimer?.cancel();
     _connectionTimeoutTimer?.cancel();
+    _connectivitySubscription?.cancel();
     _stompClient?.deactivate();
     _stompClient = null;
   }

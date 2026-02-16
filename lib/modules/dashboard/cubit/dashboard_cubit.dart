@@ -8,48 +8,47 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/common/constants/api_constants.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
+import 'package:oman_tv/models/layout_model.dart';
 import 'package:oman_tv/models/ticker_model.dart';
 import 'package:oman_tv/services/api_client.dart';
+import 'package:oman_tv/services/connectivity_service.dart';
 import 'package:oman_tv/services/iptv_socket_service.dart';
 
 part 'dashboard_state.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {
   final ApiClient _apiClient = getIt<ApiClient>();
-  final Connectivity _connectivity = Connectivity();
-  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
+  final ConnectivityService _connectivityService = getIt<ConnectivityService>();
+  late StreamSubscription<bool> _connectivitySubscription;
 
   final IptvSocketService _wsManager = IptvSocketService();
 
   Timer? _healthCheckTimer;
   Timer? _dataRefreshTimer;
-  Timer? _networkRetryTimer;
 
   String? _currentTvId;
-  int _apiRetryAttempts = 0;
-  bool _shouldReconnect = true;
-  bool _isNetworkAvailable = true;
 
   // Configuration
-  static const int MAX_API_RETRY_ATTEMPTS = 10;
   static const Duration HEALTH_CHECK_INTERVAL = Duration(seconds: 30);
   static const Duration HEARTBEAT_TIMEOUT = Duration(seconds: 150);
-  static const Duration NETWORK_RETRY_INTERVAL = Duration(seconds: 10);
   static const Duration MESSAGE_TIMEOUT = Duration(minutes: 5);
   static const Duration DATA_REFRESH_INTERVAL = Duration(minutes: 2);
 
-  DashboardCubit() : super(DashboardState()) {
-    _initializeConnectivityListener();
+  DashboardCubit() : super(const DashboardState()) {
+    _setupConnectivityListener();
     _setupWebSocketCallbacks();
   }
 
   void _setupWebSocketCallbacks() {
     _wsManager.onTvUpdateReceived = _handleTvUpdate;
+
+    _wsManager.onLayoutUpdateReceived = _handleLayoutUpdate;
+
     _wsManager.onConnectionSuccess = () async {
       debugPrint('[IPTV-WS] ✅ WebSocket connected successfully');
 
       // Update connection status
-      emit(state.copyWith(errorMessage: null, wasNetworkRestored: false));
+      emit(state.copyWith(errorMessage: null));
 
       // Refresh data after successful connection
       if (_currentTvId != null && state.tickerStatus != TickerStatus.loading) {
@@ -59,139 +58,81 @@ class DashboardCubit extends Cubit<DashboardState> {
 
     _wsManager.onConnectionError = (error) {
       debugPrint('[IPTV-WS] ❌ WebSocket error: $error');
-      emit(state.copyWith(errorMessage: error));
+      // Don't emit error - let connectivity service handle it
     };
   }
 
-  void _initializeConnectivityListener() {
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
-      List<ConnectivityResult> results,
+  void _setupConnectivityListener() {
+    _connectivitySubscription = _connectivityService.connectionStream.listen((
+      isConnected,
     ) {
-      final result = results.isNotEmpty
-          ? results.last
-          : ConnectivityResult.none;
-      _handleNetworkConnectivityChanged(result);
+      emit(state.copyWith(isNetworkConnected: isConnected));
+
+      if (isConnected) {
+        debugPrint('[DASHBOARD] 🌐 Internet restored');
+        _onConnectivityRestored();
+      } else {
+        debugPrint('[DASHBOARD] 📵 Internet lost');
+      }
     });
 
-    // Check initial connectivity
-    _checkInitialConnectivity();
+    // Set initial connectivity state
+    emit(state.copyWith(isNetworkConnected: _connectivityService.isConnected));
   }
 
-  Future<void> _checkInitialConnectivity() async {
-    try {
-      final connectivityResults = await _connectivity.checkConnectivity();
-      final result = connectivityResults.isNotEmpty
-          ? connectivityResults.last
-          : ConnectivityResult.none;
-      _handleNetworkConnectivityChanged(result);
-    } catch (e) {
-      debugPrint('[IPTV-NETWORK] Error checking initial connectivity: $e');
-    }
-  }
+  Future<void> _onConnectivityRestored() async {
+    // Reset any error messages
+    emit(state.copyWith(errorMessage: null));
 
-  Future<void> _handleNetworkConnectivityChanged(
-    ConnectivityResult result,
-  ) async {
-    final isConnected = result != ConnectivityResult.none;
-    final previouslyConnected = _isNetworkAvailable;
-
-    _isNetworkAvailable = isConnected;
-    _wsManager.updateNetworkStatus(isConnected);
-
-    emit(
-      state.copyWith(
-        isNetworkConnected: isConnected,
-        connectivityStatus: result,
-      ),
-    );
-
-    // Handle network state changes
-    if (isConnected && !previouslyConnected) {
-      debugPrint('[IPTV-NETWORK] ✅ Network connection restored');
-
-      // Cancel any network retry timer
-      _networkRetryTimer?.cancel();
-      _networkRetryTimer = null;
-
-      emit(state.copyWith(wasNetworkRestored: true, errorMessage: null));
-
-      // Reset retry attempts when network comes back
-      _apiRetryAttempts = 0;
-      _wsManager.resetAttempts();
-
-      // Auto-reconnect WebSocket
-      if (!_wsManager.isConnected && _currentTvId != null) {
-        debugPrint(
-          '[IPTV-NETWORK] 🔄 Auto-reconnecting WebSocket after network restore',
-        );
-        Future.delayed(const Duration(seconds: 2), () {
-          if (_isNetworkAvailable) {
-            _wsManager.reconnect();
-          }
-        });
-      }
-
-      // Refresh data when network comes back
-      Future.delayed(const Duration(seconds: 3), () {
-        if (_isNetworkAvailable) {
-          if (state.tickerStatus == TickerStatus.error) {
-            debugPrint('[IPTV-NETWORK] 🔄 Reloading from error state');
-            fetchTickerData();
-          } else if (state.tickerStatus == TickerStatus.success) {
-            refreshTickerData();
-          }
+    // Reconnect WebSocket if needed
+    if (!_wsManager.isConnected && _currentTvId != null) {
+      debugPrint('[DASHBOARD] 🔄 Reconnecting WebSocket');
+      Future.delayed(const Duration(seconds: 2), () {
+        if (_connectivityService.isConnected) {
+          _wsManager.reconnect();
         }
       });
-    } else if (!isConnected && previouslyConnected) {
-      debugPrint('[IPTV-NETWORK] ❌ Network connection lost');
-
-      emit(
-        state.copyWith(
-          wasNetworkRestored: false,
-          errorMessage: 'No internet connection',
-        ),
-      );
-
-      // Schedule network retry check
-      _scheduleNetworkRetry();
     }
-  }
 
-  void _scheduleNetworkRetry() {
-    if (!_shouldReconnect) return;
-
-    _networkRetryTimer?.cancel();
-
-    _networkRetryTimer = Timer.periodic(NETWORK_RETRY_INTERVAL, (timer) async {
-      try {
-        final results = await _connectivity.checkConnectivity();
-        final result = results.isNotEmpty
-            ? results.last
-            : ConnectivityResult.none;
-
-        if (result != ConnectivityResult.none) {
-          debugPrint('[IPTV-NETWORK] ✅ Network detected during retry check');
-          timer.cancel();
-          _handleNetworkConnectivityChanged(result);
-        } else {
-          debugPrint('[IPTV-NETWORK] 🔄 Still waiting for network...');
+    // Refresh data based on current state
+    Future.delayed(const Duration(seconds: 3), () {
+      if (_connectivityService.isConnected) {
+        if (state.tickerStatus == TickerStatus.error) {
+          debugPrint('[DASHBOARD] 🔄 Reloading from error state');
+          fetchTickerData();
+        } else if (state.tickerStatus == TickerStatus.success) {
+          debugPrint('[DASHBOARD] 🔄 Refreshing data');
+          refreshTickerData();
         }
-      } catch (e) {
-        debugPrint('[IPTV-NETWORK] ❌ Error checking network: $e');
       }
     });
+  }
+
+  void _handleLayoutUpdate(LayoutModel layout) {
+    debugPrint('[DASHBOARD] 🎨 Layout update received');
+    debugPrint('[DASHBOARD] 📋 Layout: ${layout.toString()}');
+
+    // Update state with new layout
+    emit(state.copyWith(currentLayout: layout));
+
+    // Optionally refresh ticker data if ticker is enabled
+    if (layout.tickerEnabled &&
+        state.tickerStatus != TickerStatus.loading &&
+        _connectivityService.isConnected) {
+      debugPrint('[DASHBOARD] 🔄 Ticker enabled - refreshing data');
+      refreshTickerData();
+    }
   }
 
   Future<void> initializeWebSocket(String tvId) async {
     _currentTvId = tvId;
-    _shouldReconnect = true;
 
-    if (_isNetworkAvailable) {
+    if (_connectivityService.isConnected) {
       await _wsManager.connect(tvId);
       _startHealthCheck();
       _startDataRefreshTimer();
     } else {
-      debugPrint('[IPTV-WS] ⏸️ Skipping WebSocket init - no network');
+      debugPrint('[DASHBOARD] ⏸️ Skipping WebSocket init - no network');
     }
   }
 
@@ -199,10 +140,8 @@ class DashboardCubit extends Cubit<DashboardState> {
     _healthCheckTimer?.cancel();
 
     _healthCheckTimer = Timer.periodic(HEALTH_CHECK_INTERVAL, (timer) {
-      if (!_shouldReconnect || !_isNetworkAvailable) {
-        debugPrint(
-          '[IPTV-HEALTH] ⏸️ Health check paused - no reconnect or network',
-        );
+      if (!_connectivityService.isConnected) {
+        debugPrint('[DASHBOARD] ⏸️ Health check paused - no network');
         return;
       }
 
@@ -215,14 +154,14 @@ class DashboardCubit extends Cubit<DashboardState> {
         final timeSinceLastMessage = now.difference(lastMessage);
 
         debugPrint(
-          '[IPTV-HEALTH] 🔍 Check - Connected: ${_wsManager.isConnected}, '
+          '[DASHBOARD] 🔍 Health check - Connected: ${_wsManager.isConnected}, '
           'Last heartbeat: ${timeSinceLastHeartbeat.inSeconds}s, '
           'Last message: ${timeSinceLastMessage.inSeconds}s',
         );
 
         // Check heartbeat
         if (timeSinceLastHeartbeat > HEARTBEAT_TIMEOUT) {
-          debugPrint('[IPTV-HEALTH] ❌ Heartbeat timeout - reconnecting');
+          debugPrint('[DASHBOARD] ❌ Heartbeat timeout - reconnecting');
           _wsManager.reconnect();
           return;
         }
@@ -237,9 +176,7 @@ class DashboardCubit extends Cubit<DashboardState> {
           // Only refresh if this is the first check after timeout
           if (intervalsSinceLastMessage == intervalsSinceTimeout &&
               state.tickerStatus == TickerStatus.success) {
-            debugPrint(
-              '[IPTV-HEALTH] 🔄 MESSAGE_TIMEOUT reached - refreshing data',
-            );
+            debugPrint('[DASHBOARD] 🔄 MESSAGE_TIMEOUT reached - refreshing');
             refreshTickerData();
           }
         }
@@ -251,31 +188,31 @@ class DashboardCubit extends Cubit<DashboardState> {
     _dataRefreshTimer?.cancel();
 
     _dataRefreshTimer = Timer.periodic(DATA_REFRESH_INTERVAL, (timer) async {
-      if (_isNetworkAvailable &&
+      if (_connectivityService.isConnected &&
           state.tickerStatus != TickerStatus.loading &&
           state.tickerStatus == TickerStatus.success) {
-        debugPrint('[IPTV-TIMER] 🔄 Periodic data refresh');
+        debugPrint('[DASHBOARD] ⏰ Periodic data refresh');
         await refreshTickerData();
       } else {
-        debugPrint(
-          '[IPTV-TIMER] ⏸️ Skipping refresh - no network or already loading',
-        );
+        debugPrint('[DASHBOARD] ⏸️ Skipping refresh - no network or loading');
       }
     });
   }
 
   void _handleTvUpdate() {
-    debugPrint('[IPTV-WS] 📺 TV update received - refreshing ticker data');
+    debugPrint('[DASHBOARD] 📺 TV update received - refreshing ticker data');
 
     // Refresh ticker data when TV update is received
-    if (state.tickerStatus != TickerStatus.loading && _isNetworkAvailable) {
+    if (state.tickerStatus != TickerStatus.loading &&
+        _connectivityService.isConnected) {
       refreshTickerData();
     }
   }
 
   Future<void> fetchTickerData() async {
-    if (!_isNetworkAvailable) {
-      debugPrint('[IPTV-API] ❌ Skipping data load - no network');
+    // Network check is already handled by ApiClient
+    if (!_connectivityService.isConnected) {
+      debugPrint('[DASHBOARD] ⏸️ Skipping data load - no network');
       emit(
         state.copyWith(
           tickerStatus: TickerStatus.error,
@@ -289,28 +226,12 @@ class DashboardCubit extends Cubit<DashboardState> {
       state.copyWith(tickerStatus: TickerStatus.loading, errorMessage: null),
     );
 
-    await _fetchTickerDataWithRetry();
-  }
-
-  Future<void> _fetchTickerDataWithRetry() async {
-    if (!_isNetworkAvailable) {
-      debugPrint('[IPTV-API] ❌ Skipping data load - no network');
-      emit(
-        state.copyWith(
-          tickerStatus: TickerStatus.error,
-          errorMessage: 'No internet connection',
-        ),
-      );
-      return;
-    }
-
     try {
+      // ApiClient already has retry logic built-in
       final response = await _apiClient.getApi(ApiConstants.tickers);
 
       if (response != null && response.statusCode == 200) {
         final tickerModel = TickerModel.fromJson(response.data);
-
-        _apiRetryAttempts = 0; // Reset on success
 
         emit(
           state.copyWith(
@@ -320,50 +241,36 @@ class DashboardCubit extends Cubit<DashboardState> {
           ),
         );
 
-        debugPrint('[IPTV-API] ✅ Ticker data loaded successfully');
+        debugPrint('[DASHBOARD] ✅ Ticker data loaded successfully');
       } else {
         throw Exception('Failed to load ticker data');
       }
     } catch (e, stack) {
-      debugPrint('[IPTV-API] ❌ Failed to load ticker data: $e');
+      debugPrint('[DASHBOARD] ❌ Failed to load ticker data: $e');
       debugPrint(stack.toString());
 
-      _apiRetryAttempts++;
-
-      if (_apiRetryAttempts < MAX_API_RETRY_ATTEMPTS) {
-        final delay = Duration(seconds: (3 * _apiRetryAttempts).clamp(3, 30));
-        debugPrint(
-          '[IPTV-API] 🔄 Retry attempt $_apiRetryAttempts in ${delay.inSeconds}s',
-        );
-
-        await Future.delayed(delay);
-        if (_shouldReconnect && !isClosed) {
-          await _fetchTickerDataWithRetry();
-        }
-      } else {
-        emit(
-          state.copyWith(
-            tickerStatus: TickerStatus.error,
-            errorMessage:
-                'Failed to load data after $_apiRetryAttempts attempts',
-          ),
-        );
-      }
+      emit(
+        state.copyWith(
+          tickerStatus: TickerStatus.error,
+          errorMessage: 'Failed to load ticker data',
+        ),
+      );
     }
   }
 
   Future<void> refreshTickerData() async {
-    if (!_isNetworkAvailable) {
-      debugPrint('[IPTV-REFRESH] ⏸️ Skipping refresh - no network');
+    if (!_connectivityService.isConnected) {
+      debugPrint('[DASHBOARD] ⏸️ Skipping refresh - no network');
       return;
     }
 
     if (state.tickerStatus == TickerStatus.loading) {
-      debugPrint('[IPTV-REFRESH] ⏸️ Already loading');
+      debugPrint('[DASHBOARD] ⏸️ Already loading');
       return;
     }
 
     try {
+      // ApiClient handles retry automatically
       final response = await _apiClient.getApi(ApiConstants.tickers);
 
       if (response != null && response.statusCode == 200) {
@@ -377,10 +284,10 @@ class DashboardCubit extends Cubit<DashboardState> {
           ),
         );
 
-        debugPrint('✅ Ticker data refreshed successfully');
+        debugPrint('[DASHBOARD] ✅ Ticker data refreshed successfully');
       }
     } catch (e, stack) {
-      debugPrint('⚠️ Refresh error: $e');
+      debugPrint('[DASHBOARD] ⚠️ Refresh error: $e');
       debugPrint(stack.toString());
 
       // Keep current state on error (silent failure)
@@ -389,58 +296,60 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   Future<void> onAppResumed() async {
-    debugPrint('[IPTV-APP] 📱 App resumed');
+    debugPrint('[DASHBOARD] 📱 App resumed');
 
-    // Check network first
-    await _checkInitialConnectivity();
+    // Check network status
+    final isConnected = await _connectivityService.checkConnection();
+    emit(state.copyWith(isNetworkConnected: isConnected));
 
+    if (!isConnected) {
+      debugPrint('[DASHBOARD] ⏸️ No network on resume');
+      return;
+    }
+
+    // Refresh data if we have it
     if (state.tickerStatus == TickerStatus.success) {
-      // Refresh data
       await refreshTickerData();
+    }
 
-      // Reconnect WebSocket if needed
-      if (!_wsManager.isConnected &&
-          _isNetworkAvailable &&
-          _currentTvId != null) {
-        await _wsManager.reconnect();
-      }
+    // Reconnect WebSocket if needed
+    if (!_wsManager.isConnected && _currentTvId != null) {
+      await _wsManager.reconnect();
     }
   }
 
   Future<void> manualRetry() async {
-    debugPrint('[IPTV-MANUAL] 🔄 Manual retry requested');
+    debugPrint('[DASHBOARD] 🔄 Manual retry requested');
 
-    // Reset attempts
-    _apiRetryAttempts = 0;
+    // Check network status
+    final isConnected = await _connectivityService.checkConnection();
+    emit(state.copyWith(isNetworkConnected: isConnected));
+
+    if (!isConnected) {
+      debugPrint('[DASHBOARD] ⏸️ No network available');
+      return;
+    }
+
+    // Reset WebSocket attempts
     _wsManager.resetAttempts();
 
-    // Cancel existing timers
-    _networkRetryTimer?.cancel();
-
-    // Check network
-    await _checkInitialConnectivity();
-
-    // Refresh everything
+    // Refresh or reload data
     if (state.tickerStatus == TickerStatus.success) {
       await refreshTickerData();
 
-      if (_isNetworkAvailable && _currentTvId != null) {
+      if (_currentTvId != null) {
         await _wsManager.reconnect();
       }
     } else {
-      // Try to reload from scratch
       await fetchTickerData();
     }
   }
 
   @override
   Future<void> close() {
-    _shouldReconnect = false;
-
     // Cancel all timers
     _healthCheckTimer?.cancel();
     _dataRefreshTimer?.cancel();
-    _networkRetryTimer?.cancel();
     _connectivitySubscription.cancel();
 
     // Clean up WebSocket

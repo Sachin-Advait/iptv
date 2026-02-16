@@ -9,13 +9,13 @@ import 'package:oman_tv/modules/annoucement/annoucement_view.dart';
 import 'package:oman_tv/modules/catch_up/catch_up_view.dart';
 import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
 import 'package:oman_tv/modules/dashboard/widgets/custom_error.dart';
-import 'package:oman_tv/modules/dashboard/widgets/dashboard_config.dart';
 import 'package:oman_tv/modules/dashboard/widgets/header.dart';
 import 'package:oman_tv/modules/dashboard/widgets/ticker_state.dart';
 import 'package:oman_tv/modules/home/home_view.dart';
 import 'package:oman_tv/modules/live_tv/live_tv_view.dart';
 import 'package:oman_tv/modules/radio/radio_view.dart';
 import 'package:oman_tv/modules/vod/vod_view.dart';
+import 'package:oman_tv/services/session_manager.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -61,12 +61,12 @@ class _DashboardViewState extends State<DashboardView>
 
     try {
       // Get TV ID from configuration
-      final tvId = DashboardConfig.getTvId();
+      final tvId = SessionManager.getTvId();
 
       debugPrint('[DASHBOARD] 🚀 Initializing dashboard for TV: $tvId');
 
       // Initialize WebSocket connection
-      // await _dashboardCubit.initializeWebSocket(tvId);
+      await _dashboardCubit.initializeWebSocket(tvId);
 
       // Fetch initial ticker data
       await _dashboardCubit.fetchTickerData();

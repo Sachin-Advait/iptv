@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/common/constants/api_constants.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
-import 'package:oman_tv/modules/splash/view/device_config.dart';
+import 'package:oman_tv/models/regsitration_model.dart';
 import 'package:oman_tv/services/api_client.dart';
 import 'package:oman_tv/services/session_manager.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -27,20 +27,19 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     Emitter<SplashState> emit,
   ) async {
     try {
-      // Check if device is already registered
       final existingDeviceId = SessionManager.getDeviceId();
+      final existingTvId = SessionManager.getTvId();
 
-      if (existingDeviceId.isEmpty) {
-        debugPrint('[SPLASH] 📱 No saved device ID, registering device...');
+      if (existingDeviceId.isEmpty || existingTvId.isEmpty) {
+        debugPrint('[SPLASH] 📱 No saved device/tv ID, registering device...');
+        final tvId = await _registerDevice();
 
-        // Register the device
-        final deviceId = await _registerDevice();
-
-        if (deviceId != null) {
-          debugPrint('[SPLASH] ✅ Device registered: $deviceId');
+        if (tvId != null) {
+          debugPrint('[SPLASH] ✅ Device registered, TV ID: $tvId');
         }
       } else {
-        debugPrint('[SPLASH] ✅ Device already registered: $existingDeviceId');
+        debugPrint('[SPLASH] ✅ Device already registered');
+        debugPrint('[SPLASH] 🆔 TV ID: $existingTvId');
         await Future.delayed(const Duration(milliseconds: 2000));
       }
 
@@ -54,65 +53,62 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     }
   }
 
-  Future<String?> _registerDevice() async {
-    try {
-      // Get app version
-      final packageInfo = await PackageInfo.fromPlatform();
-      final appVersion = packageInfo.version;
+  Future<String?> _registerDevice({int maxAttempts = 5}) async {
+    int attempt = 0;
 
-      // Generate persistent device ID (survives reinstall)
-      final deviceId = await _generateDeviceId();
+    while (attempt < maxAttempts) {
+      attempt++;
+      try {
+        final packageInfo = await PackageInfo.fromPlatform();
+        final appVersion = packageInfo.version;
 
-      // Get device location from configuration
-      final location = DeviceConfig.getLocation();
+        final localDeviceId = await _generateDeviceId();
+        final location = "Defualt Location";
 
-      // Prepare registration data
-      final registrationData = {
-        'deviceId': deviceId,
-        'location': location,
-        'appVersion': appVersion,
-      };
+        final registrationData = {
+          'deviceId': localDeviceId,
+          'location': location,
+          'appVersion': appVersion,
+        };
 
-      debugPrint('[SPLASH] 📤 Registering device: $registrationData');
-
-      // Call registration API
-      final response = await _apiClient.postApi(
-        ApiConstants.register,
-        body: registrationData,
-      );
-
-      if (response != null && response.statusCode == 200) {
-        // Save device ID to session
-        await SessionManager.saveDeviceId(deviceId);
-
-        debugPrint('[SPLASH] ✅ Device registered successfully');
-        debugPrint('[SPLASH] 📍 Location: $location');
-
-        return deviceId;
-      } else {
         debugPrint(
-          '[SPLASH] ⚠️ Registration failed with status: ${response?.statusCode}',
+          '[SPLASH] 📤 Registering device (attempt $attempt/$maxAttempts): $registrationData',
         );
 
-        // Save device ID locally anyway
-        await SessionManager.saveDeviceId(deviceId);
+        final response = await _apiClient.postApi(
+          ApiConstants.register,
+          body: registrationData,
+        );
 
-        return deviceId;
-      }
-    } catch (e) {
-      debugPrint('[SPLASH] ❌ Device registration error: $e');
+        if (response != null && response.statusCode == 200) {
+          final model = RegistrationModel.fromJson(response.data);
 
-      // Generate and save device ID locally for offline use
-      try {
-        final deviceId = await _generateDeviceId();
-        await SessionManager.saveDeviceId(deviceId);
-        debugPrint('[SPLASH] 💾 Device ID saved locally: $deviceId');
-        return deviceId;
-      } catch (saveError) {
-        debugPrint('[SPLASH] ❌ Failed to save device ID: $saveError');
-        return null;
+          final tvId = model.data.id.toString();
+          final serverDeviceId = model.data.deviceId;
+
+          if (tvId.isNotEmpty) {
+            await SessionManager.saveTvId(tvId);
+            await SessionManager.saveDeviceId(serverDeviceId);
+
+            debugPrint('[SPLASH] ✅ Device registered');
+            debugPrint('[SPLASH] 🆔 TV ID: $tvId');
+            return tvId;
+          }
+        }
+
+        debugPrint('[SPLASH] ⚠️ Invalid response, retrying...');
+      } catch (e) {
+        debugPrint('[SPLASH] ❌ Registration attempt $attempt failed: $e');
       }
+
+      // ⏳ Backoff before retry (2s, 4s, 6s…)
+      final delay = Duration(seconds: 2 * attempt);
+      debugPrint('[SPLASH] ⏳ Retrying in ${delay.inSeconds}s...');
+      await Future.delayed(delay);
     }
+
+    debugPrint('[SPLASH] ⛔ Registration failed after $maxAttempts attempts');
+    return null;
   }
 
   /// Generates a persistent device ID for Android
