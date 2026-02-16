@@ -98,6 +98,7 @@ class _DashboardViewState extends State<DashboardView>
 
       debugPrint('[DASHBOARD] 🚀 Initializing dashboard for TV: $tvId');
 
+      await _dashboardCubit.fetchDashboardData();
       // Initialize WebSocket connection
       await _dashboardCubit.initializeWebSocket(tvId);
 
@@ -193,8 +194,6 @@ class _DashboardViewState extends State<DashboardView>
               _stopTickerAutoScroll();
             }
 
-            final showTicker = state.dashboardStatus == DashboardStatus.success;
-
             return Stack(
               children: [
                 Focus(
@@ -219,13 +218,10 @@ class _DashboardViewState extends State<DashboardView>
                       ),
 
                       // 📰 Ticker UI only
-                      if (showTicker)
-                        NewsTicker(
-                          items: tickerItems,
-                          controller: _tickerScrollController,
-                        )
-                      else
-                        const SizedBox(),
+                      NewsTicker(
+                        items: tickerItems,
+                        controller: _tickerScrollController,
+                      ),
                     ],
                   ),
                 ),

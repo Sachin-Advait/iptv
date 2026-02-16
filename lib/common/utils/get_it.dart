@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:oman_tv/common/constants/api_constants.dart';
 import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
-import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
 import 'package:oman_tv/modules/splash/bloc/splash_bloc.dart';
 import 'package:oman_tv/services/api_client.dart';
 import 'package:oman_tv/services/connectivity_service.dart';
@@ -56,8 +55,6 @@ void getItSetup() {
   getIt.registerSingleton<ApiClient>(ApiClient(dio: dio));
 
   getIt.registerFactory<DashboardCubit>(() => DashboardCubit());
-
-  getIt.registerFactory<HomeCubit>(() => HomeCubit());
 
   getIt.registerFactory<SplashBloc>(
     () => SplashBloc()..add(NavigateToNextEvent()),

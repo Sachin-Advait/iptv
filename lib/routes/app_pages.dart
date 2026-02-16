@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/common/widgets/video_player.dart';
-import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
 import 'package:oman_tv/modules/dashboard/dashboard_view.dart';
 import 'package:oman_tv/modules/profile/profile_view.dart';
 import 'package:oman_tv/modules/splash/bloc/splash_bloc.dart';
@@ -27,13 +26,7 @@ class Pages {
         );
 
       case Routes.dashboard:
-        return _simpleRoute(
-          BlocProvider(
-            create: (context) => getIt<DashboardCubit>(),
-            child: const DashboardView(),
-          ),
-          settings,
-        );
+        return _simpleRoute(const DashboardView(), settings);
 
       case Routes.profile:
         return _simpleRoute(const ProfileView(), settings);

@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:oman_tv/common/constants/api_constants.dart';
 import 'package:oman_tv/common/utils/app_screen_util.dart';
 import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/common/widgets/carousel_banner.dart';
 import 'package:oman_tv/configs/assets/app_banner.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
-import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
 import 'package:oman_tv/modules/vod/widgets/video_card.dart';
 
 class VodView extends StatefulWidget {
@@ -20,7 +17,6 @@ class _VodViewState extends State<VodView> implements FocusListener {
   @override
   void initState() {
     super.initState();
-    context.read<HomeCubit>().fetchMedia(ApiConstants.vod);
     FocusListener.add(this);
   }
 
@@ -45,7 +41,7 @@ class _VodViewState extends State<VodView> implements FocusListener {
         children: [
           FocusTraversalGroup(
             policy: const RecentFocusTraversalPolicy(group: FocusGroup.button),
-            child: CarouselBanner(),
+            child: CarouselBanner(category: 'VOD'),
           ),
           20.verticalSpace,
           SizedBox(
@@ -83,7 +79,9 @@ class _VodViewState extends State<VodView> implements FocusListener {
                   ListView.separated(
                     scrollDirection: Axis.horizontal,
                     clipBehavior: Clip.none,
-                    padding: EdgeInsets.symmetric(horizontal: 20.widthMultiplier),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.widthMultiplier,
+                    ),
                     itemCount: row2.length,
                     separatorBuilder: (context, index) => 10.horizontalSpace,
                     itemBuilder: (context, index) {

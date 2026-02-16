@@ -9,7 +9,7 @@ import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/common/utils/global_keys.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
-import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
+import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
 import 'package:oman_tv/routes/app_pages.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -48,7 +48,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<HomeCubit>(),
+      create: (context) => getIt<DashboardCubit>(),
       child: LayoutBuilder(
         builder: (context, constraints) => ScreenUtilInit(
           designSize: Size(constraints.maxWidth, constraints.maxHeight),

@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:oman_tv/common/constants/api_constants.dart';
 import 'package:oman_tv/common/utils/app_screen_util.dart';
 import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/common/widgets/carousel_banner.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
-import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
 import 'package:oman_tv/modules/home/widget/section_data.dart';
 import 'package:oman_tv/modules/home/widget/section_row.dart';
 
@@ -21,7 +18,6 @@ class _LiveTVViewState extends State<LiveTVView> implements FocusListener {
   @override
   void initState() {
     super.initState();
-    context.read<HomeCubit>().fetchMedia(ApiConstants.live);
     FocusListener.add(this);
   }
 
@@ -46,7 +42,7 @@ class _LiveTVViewState extends State<LiveTVView> implements FocusListener {
         children: [
           FocusTraversalGroup(
             policy: const RecentFocusTraversalPolicy(group: FocusGroup.button),
-            child: CarouselBanner(),
+            child: CarouselBanner(category: 'Live TV'),
           ),
           20.verticalSpace,
           Column(

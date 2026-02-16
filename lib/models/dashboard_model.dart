@@ -56,16 +56,16 @@ class DashboardDetails {
 }
 
 class BannerZoneElement {
-  int id;
-  String title;
-  String category;
+  int? id;
+  String? title;
+  String? category;
   List<String>? imageUrls;
   String? videoUrl;
 
   BannerZoneElement({
-    required this.id,
-    required this.title,
-    required this.category,
+    this.id,
+    this.title,
+    this.category,
     this.imageUrls,
     this.videoUrl,
   });
@@ -178,40 +178,42 @@ class Layout {
 }
 
 class ConfigJson {
-  ChannelZoneClass videoZone;
-  ChannelZoneClass bannerZone;
-  ChannelZoneClass tickerZone;
-  ChannelZoneClass channelZone;
+  ChannelZoneClass? videoZone;
+  ChannelZoneClass? bannerZone;
+  ChannelZoneClass? tickerZone;
+  ChannelZoneClass? channelZone;
 
   ConfigJson({
-    required this.videoZone,
-    required this.bannerZone,
-    required this.tickerZone,
-    required this.channelZone,
+    this.videoZone,
+    this.bannerZone,
+    this.tickerZone,
+    this.channelZone,
   });
 
   factory ConfigJson.fromJson(Map<String, dynamic> json) => ConfigJson(
-    videoZone: ChannelZoneClass.fromJson(json["videoZone"]),
-    bannerZone: ChannelZoneClass.fromJson(json["bannerZone"]),
-    tickerZone: ChannelZoneClass.fromJson(json["tickerZone"]),
-    channelZone: ChannelZoneClass.fromJson(json["channelZone"]),
+    videoZone: json["videoZone"] != null
+        ? ChannelZoneClass.fromJson(json["videoZone"])
+        : null,
+    bannerZone: json["bannerZone"] != null
+        ? ChannelZoneClass.fromJson(json["bannerZone"])
+        : null,
+    tickerZone: json["tickerZone"] != null
+        ? ChannelZoneClass.fromJson(json["tickerZone"])
+        : null,
+    channelZone: json["channelZone"] != null
+        ? ChannelZoneClass.fromJson(json["channelZone"])
+        : null,
   );
 }
 
 class ChannelZoneClass {
-  int x;
-  int y;
-  int width;
-  int height;
+  int? x;
+  int? y;
+  int? width;
+  int? height;
   String? position;
 
-  ChannelZoneClass({
-    required this.x,
-    required this.y,
-    required this.width,
-    required this.height,
-    this.position,
-  });
+  ChannelZoneClass({this.x, this.y, this.width, this.height, this.position});
 
   factory ChannelZoneClass.fromJson(Map<String, dynamic> json) =>
       ChannelZoneClass(

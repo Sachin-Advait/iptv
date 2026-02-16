@@ -8,13 +8,15 @@ import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/common/widgets/banner_shimmer.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
-import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
+import 'package:oman_tv/models/dashboard_model.dart';
+import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
 import 'package:oman_tv/routes/app_pages.dart';
 
 class CarouselBanner extends StatefulWidget {
+  final String category;
   final Function(String)? onSearch;
 
-  const CarouselBanner({super.key, this.onSearch});
+  const CarouselBanner({super.key, required this.category, this.onSearch});
 
   @override
   State<CarouselBanner> createState() => _CarouselBannerState();
@@ -74,15 +76,53 @@ class _CarouselBannerState extends State<CarouselBanner> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeCubit, HomeState>(
+    return BlocBuilder<DashboardCubit, DashboardState>(
       builder: (context, state) {
         // Show shimmer while loading
-        if (state.mediaStatus == MediaStatus.loading) {
+        if (state.dashboardStatus == DashboardStatus.loading) {
           return const BannerShimmer(height: 300);
         }
 
-        if (state.mediaStatus == MediaStatus.success) {
-          if (state.mediaData!.imageUrl.isEmpty) {
+        // Error state
+        if (state.dashboardStatus == DashboardStatus.error) {
+          return _buildPlaceholderBanner(errorMessage: state.errorMessage);
+        }
+
+        // Success state
+        if (state.dashboardStatus == DashboardStatus.success) {
+          // Check if layout has banner enabled
+          if (state.dashboardData?.layout.bannerEnabled != true) {
+            return const SizedBox.shrink(); // Hide banner if disabled
+          }
+
+          // Get banners for current category
+          final categoryBanners =
+              state.dashboardData?.bannerZone
+                  .where((banner) => banner.category == widget.category)
+                  .toList() ??
+              [];
+
+          // Get video URL for current category (for play button)
+          final categoryVideo = state.dashboardData?.videoZone
+              .where((video) => video.category == widget.category)
+              .toList();
+
+          final BannerZoneElement? video =
+              (categoryVideo != null && categoryVideo.isNotEmpty)
+              ? categoryVideo.first
+              : null;
+
+          // If no banners for this category, show placeholder
+          if (categoryBanners.isEmpty) {
+            return _buildPlaceholderBanner();
+          }
+
+          // Get all image URLs from category banners
+          final allImageUrls = categoryBanners
+              .expand((banner) => banner.imageUrls ?? [])
+              .toList();
+
+          if (allImageUrls.isEmpty) {
             return _buildPlaceholderBanner();
           }
 
@@ -113,7 +153,7 @@ class _CarouselBannerState extends State<CarouselBanner> {
                         });
                       },
                     ),
-                    items: state.mediaData!.imageUrl.map((imageUrl) {
+                    items: allImageUrls.map((imageUrl) {
                       return Stack(
                         children: [
                           Container(
@@ -148,30 +188,29 @@ class _CarouselBannerState extends State<CarouselBanner> {
                   ),
 
                   // Dots Indicator (only if multiple banners)
-                  Positioned(
-                    bottom: 16,
-                    right: 16,
-                    child: Row(
-                      children: state.mediaData!.imageUrl.asMap().entries.map((
-                        entry,
-                      ) {
-                        return Container(
-                          width: 10.widthMultiplier,
-                          height: 10.heightMultiplier,
-                          margin: EdgeInsets.symmetric(
-                            horizontal: 4.widthMultiplier,
-                          ),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.primary),
-                            color: _currentBannerIndex == entry.key
-                                ? AppColors.primary
-                                : Colors.transparent,
-                          ),
-                        );
-                      }).toList(),
+                  if (allImageUrls.length > 1)
+                    Positioned(
+                      bottom: 16,
+                      right: 16,
+                      child: Row(
+                        children: allImageUrls.asMap().entries.map((entry) {
+                          return Container(
+                            width: 10.widthMultiplier,
+                            height: 10.heightMultiplier,
+                            margin: EdgeInsets.symmetric(
+                              horizontal: 4.widthMultiplier,
+                            ),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.primary),
+                              color: _currentBannerIndex == entry.key
+                                  ? AppColors.primary
+                                  : Colors.transparent,
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
-                  ),
 
                   // Netflix-style Search Bar (Top Right)
                   Positioned(
@@ -182,85 +221,86 @@ class _CarouselBannerState extends State<CarouselBanner> {
                         : _buildSearchIcon(),
                   ),
 
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    child: Focus(
-                      focusNode: _playFocusNode,
-                      onFocusChange: (v) {
-                        debugPrint('PLAY BUTTON FOCUS CHANGE = $v');
-                      },
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            Routes.video,
-                            arguments: {'videoUrl': state.mediaData?.videoUrl},
-                          );
+                  // Play Button (only if video exists for category)
+                  if (video != null)
+                    Positioned(
+                      bottom: 16,
+                      left: 16,
+                      child: Focus(
+                        focusNode: _playFocusNode,
+                        onFocusChange: (v) {
+                          debugPrint('PLAY BUTTON FOCUS CHANGE = $v');
                         },
-                        child: Builder(
-                          builder: (context) {
-                            final isFocused = Focus.of(context).hasFocus;
-
-                            return AnimatedScale(
-                              scale: isFocused ? 1.2 : 1.0,
-                              duration: const Duration(milliseconds: 200),
-                              curve: Curves.easeOut,
-                              child: Container(
-                                margin: EdgeInsets.only(left: 10),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(30),
-                                  color: isFocused
-                                      ? AppColors.beige
-                                      : Colors.white,
-                                  boxShadow: isFocused
-                                      ? [
-                                          BoxShadow(
-                                            color: AppColors.beige.withValues(
-                                              alpha: 0.6,
-                                            ),
-                                            blurRadius: 12,
-                                            spreadRadius: 2,
-                                          ),
-                                        ]
-                                      : [],
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.play_arrow_rounded,
-                                      color: AppColors.black,
-                                    ),
-                                    6.horizontalSpace,
-                                    Text("Play", style: context.semiBold),
-                                  ],
-                                ),
-                              ),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              Routes.video,
+                              arguments: {'videoUrl': video},
                             );
                           },
+                          child: Builder(
+                            builder: (context) {
+                              final isFocused = Focus.of(context).hasFocus;
+
+                              return AnimatedScale(
+                                scale: isFocused ? 1.2 : 1.0,
+                                duration: const Duration(milliseconds: 200),
+                                curve: Curves.easeOut,
+                                child: Container(
+                                  margin: const EdgeInsets.only(left: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(30),
+                                    color: isFocused
+                                        ? AppColors.beige
+                                        : Colors.white,
+                                    boxShadow: isFocused
+                                        ? [
+                                            BoxShadow(
+                                              color: AppColors.beige.withValues(
+                                                alpha: 0.6,
+                                              ),
+                                              blurRadius: 12,
+                                              spreadRadius: 2,
+                                            ),
+                                          ]
+                                        : [],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.play_arrow_rounded,
+                                        color: AppColors.black,
+                                      ),
+                                      6.horizontalSpace,
+                                      Text("Play", style: context.semiBold),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
+                        onKeyEvent: (_, event) {
+                          if (event is KeyUpEvent &&
+                              (event.logicalKey == LogicalKeyboardKey.enter ||
+                                  event.logicalKey ==
+                                      LogicalKeyboardKey.select)) {
+                            Navigator.pushNamed(
+                              context,
+                              Routes.video,
+                              arguments: {'videoUrl': video},
+                            );
+                            return KeyEventResult.handled;
+                          }
+                          return KeyEventResult.ignored;
+                        },
                       ),
-                      onKeyEvent: (_, event) {
-                        if (event is KeyUpEvent &&
-                            (event.logicalKey == LogicalKeyboardKey.enter ||
-                                event.logicalKey ==
-                                    LogicalKeyboardKey.select)) {
-                          // widget.onPlayPressed?.call();
-                          Navigator.pushNamed(
-                            context,
-                            Routes.video,
-                            arguments: {'videoUrl': state.mediaData?.videoUrl},
-                          );
-                          return KeyEventResult.handled;
-                        }
-                        return KeyEventResult.ignored;
-                      },
                     ),
-                  ),
                 ],
               ),
             ),
@@ -272,7 +312,7 @@ class _CarouselBannerState extends State<CarouselBanner> {
     );
   }
 
-  Widget _buildPlaceholderBanner() {
+  Widget _buildPlaceholderBanner({String? errorMessage}) {
     return Container(
       height: 300.heightMultiplier,
       width: double.infinity,
@@ -281,12 +321,12 @@ class _CarouselBannerState extends State<CarouselBanner> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.image, color: AppColors.beige, size: 50.textMultiplier),
+            Icon(Icons.image, color: AppColors.white, size: 50.textMultiplier),
             8.verticalSpace,
             Text(
-              'No banners available',
+              errorMessage ?? 'No banners available for ${widget.category}',
               style: TextStyle(
-                color: AppColors.beige,
+                color: AppColors.white,
                 fontSize: 16.textMultiplier,
               ),
             ),
@@ -313,7 +353,7 @@ class _CarouselBannerState extends State<CarouselBanner> {
             child: GestureDetector(
               onTap: _toggleSearch,
               child: Container(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isFocused
@@ -446,5 +486,17 @@ class _CarouselBannerState extends State<CarouselBanner> {
         ),
       ),
     );
+  }
+}
+
+// Animation wrapper widget
+class AnimatedBannerWrapper extends StatelessWidget {
+  final Widget child;
+
+  const AnimatedBannerWrapper({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return child;
   }
 }

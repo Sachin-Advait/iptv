@@ -1,13 +1,10 @@
 // modules/home/home_view.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:oman_tv/common/constants/api_constants.dart';
 import 'package:oman_tv/common/utils/app_screen_util.dart';
 import 'package:oman_tv/common/utils/focus_traversal.dart';
 import 'package:oman_tv/common/widgets/carousel_banner.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
-import 'package:oman_tv/modules/home/cubit/home_cubit.dart';
 import 'package:oman_tv/modules/home/widget/section_data.dart';
 import 'package:oman_tv/modules/home/widget/section_row.dart';
 
@@ -27,7 +24,6 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
   void initState() {
     super.initState();
     FocusListener.add(this);
-    context.read<HomeCubit>().fetchMedia(ApiConstants.home);
   }
 
   @override
@@ -52,6 +48,7 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
           FocusTraversalGroup(
             policy: const RecentFocusTraversalPolicy(group: FocusGroup.button),
             child: CarouselBanner(
+              category: 'Home',
               onSearch: (query) {
                 // Handle search functionality
                 debugPrint('Search query: $query');
