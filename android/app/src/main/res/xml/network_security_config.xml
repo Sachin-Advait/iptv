@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
 
-    <!-- Allow RadioJar HTTP streams -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">radiojar.com</domain>
-        <domain includeSubdomains="true">n08.radiojar.com</domain>
-        <domain includeSubdomains="true">stream.radiojar.com</domain>
-    </domain-config>
+    <!-- Allow HTTP globally (needed for IPTV, LAN streams, test videos) -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
 
 </network-security-config>

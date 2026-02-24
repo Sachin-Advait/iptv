@@ -1,0 +1,16 @@
+{
+  "app_title": "ServelQ",
+  "english": "English",
+  "arabic": "Arabic",
+  "branch_muscat": "Branch - Muscat",
+  "now_calling": "Now Calling",
+  "token": "Token",
+  "counter": "Counter",
+  "now_serving": "Serving",
+  "service": "Service",
+  "upcoming_tokens": "Upcoming",
+  "hold_tokens": "Hold",
+  "no_active_services": "No active services",
+  "no_upcoming_tokens": "No upcoming tokens",
+  "no_tokens_serving": "No token serving"
+}

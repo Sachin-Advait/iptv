@@ -1,5 +1,5 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 
 class RadioPlayerService {
   static final RadioPlayerService _instance = RadioPlayerService._internal();
@@ -11,8 +11,8 @@ class RadioPlayerService {
 
   Future<void> play(String url) async {
     try {
-      await _player.setUrl(url);
-      _player.play();
+      await _player.setVolume(1.0);
+      await _player.play(UrlSource(url));
     } catch (e) {
       debugPrint('This is audio error---->>>>> $e');
     }
@@ -26,5 +26,5 @@ class RadioPlayerService {
     await _player.pause();
   }
 
-  bool get isPlaying => _player.playing;
+  bool get isPlaying => _player.state == PlayerState.playing;
 }

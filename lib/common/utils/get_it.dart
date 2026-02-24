@@ -1,11 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
-import 'package:oman_tv/common/constants/api_constants.dart';
+import 'package:oman_tv/configs/lang/localization_cubit.dart';
 import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
+import 'package:oman_tv/modules/meeting_tv/bloc/meeting_tv_bloc.dart';
+import 'package:oman_tv/modules/meeting_tv/repository/meeting_tv_repo.dart';
 import 'package:oman_tv/modules/splash/bloc/splash_bloc.dart';
+import 'package:oman_tv/modules/visitor_tv/cubit/visitor_tv_cubit.dart';
+import 'package:oman_tv/modules/visitor_tv/repo/visitor_tv_repo.dart';
 import 'package:oman_tv/services/api_client.dart';
 import 'package:oman_tv/services/connectivity_service.dart';
+import 'package:oman_tv/services/google_speech.dart';
 
 final getIt = GetIt.instance;
 
@@ -13,7 +18,6 @@ void getItSetup() {
   getIt.registerLazySingleton<ConnectivityService>(() => ConnectivityService());
   final dio = Dio(
     BaseOptions(
-      baseUrl: ApiConstants.baseUrl,
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
     ),
@@ -58,6 +62,22 @@ void getItSetup() {
 
   getIt.registerFactory<SplashBloc>(
     () => SplashBloc()..add(NavigateToNextEvent()),
+  );
+
+  getIt.registerFactory<LocalizationCubit>(() => LocalizationCubit());
+
+  getIt.registerLazySingleton<VisitorTvRepo>(
+    () => VisitorTvRepo(getIt<ApiClient>()),
+  );
+
+  getIt.registerFactory<VisitorTvCubit>(
+    () => VisitorTvCubit(getIt<VisitorTvRepo>(), PiperTtsService()),
+  );
+
+  getIt.registerFactory<MeetingTvRepo>(() => MeetingTvRepo());
+
+  getIt.registerFactory<MeetingTvBloc>(
+    () => MeetingTvBloc(meetingTvRepo: getIt<MeetingTvRepo>()),
   );
 }
 

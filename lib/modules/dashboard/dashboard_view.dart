@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/common/utils/focus_traversal.dart';
+import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/common/widgets/carousel_banner.dart';
 import 'package:oman_tv/common/widgets/flutter_toast.dart';
 import 'package:oman_tv/common/widgets/video_player.dart';
+import 'package:oman_tv/configs/lang/localization_cubit.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/modules/annoucement/annoucement_view.dart';
 import 'package:oman_tv/modules/catch_up/catch_up_view.dart';
@@ -16,7 +19,11 @@ import 'package:oman_tv/modules/dashboard/widgets/network_overlay.dart';
 import 'package:oman_tv/modules/dashboard/widgets/ticker_state.dart';
 import 'package:oman_tv/modules/home/home_view.dart';
 import 'package:oman_tv/modules/live_tv/live_tv_view.dart';
+import 'package:oman_tv/modules/meeting_tv/bloc/meeting_tv_bloc.dart';
+import 'package:oman_tv/modules/meeting_tv/pages/meeting_tv.dart';
 import 'package:oman_tv/modules/radio/radio_view.dart';
+import 'package:oman_tv/modules/visitor_tv/cubit/visitor_tv_cubit.dart';
+import 'package:oman_tv/modules/visitor_tv/pages/visitor_tv.dart';
 import 'package:oman_tv/modules/vod/vod_view.dart';
 import 'package:oman_tv/services/session_manager.dart';
 
@@ -35,8 +42,6 @@ class _DashboardViewState extends State<DashboardView>
   late DashboardCubit _dashboardCubit;
   bool _isInitialized = false;
   bool _wasShowingError = false;
-  late ScrollController _tickerScrollController;
-  Timer? _tickerTimer;
 
   List page = [
     const HomeView(),
@@ -55,38 +60,14 @@ class _DashboardViewState extends State<DashboardView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _tickerScrollController = ScrollController();
     _dashboardCubit = context.read<DashboardCubit>();
     FocusListener.add(this);
 
     _initializeDashboard();
   }
 
-  void _startTickerAutoScroll() {
-    _tickerTimer?.cancel();
-
-    _tickerTimer = Timer.periodic(const Duration(milliseconds: 30), (_) {
-      if (_tickerScrollController.hasClients) {
-        final max = _tickerScrollController.position.maxScrollExtent;
-        final current = _tickerScrollController.offset;
-
-        if (current >= max) {
-          _tickerScrollController.jumpTo(0);
-        } else {
-          _tickerScrollController.jumpTo(current + 2);
-        }
-      }
-    });
-  }
-
-  void _stopTickerAutoScroll() {
-    _tickerTimer?.cancel();
-  }
-
   @override
   void dispose() {
-    _tickerTimer?.cancel();
-    _tickerScrollController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     FocusListener.remove(this);
     super.dispose();
@@ -136,6 +117,13 @@ class _DashboardViewState extends State<DashboardView>
     }
   }
 
+  Future<void> changeOr() async {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -176,8 +164,6 @@ class _DashboardViewState extends State<DashboardView>
             // 🔴 Full-screen error
             if (!state.isNetworkConnected &&
                 state.dashboardStatus == DashboardStatus.error) {
-              _stopTickerAutoScroll();
-
               return CustomError(
                 message: state.errorMessage ?? 'No internet connection',
                 isNetworkError: true,
@@ -185,20 +171,38 @@ class _DashboardViewState extends State<DashboardView>
               );
             }
 
-            // 🟢 Normal UI
-            final tickerItems = state.dashboardData?.tickerZone ?? [];
-
-            if (state.dashboardStatus == DashboardStatus.success &&
-                tickerItems.isNotEmpty) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _startTickerAutoScroll();
-              });
-            } else {
-              _stopTickerAutoScroll();
-            }
-
             final layout = state.dashboardData?.layout;
 
+            if (state.dashboardData?.profileName == "ServeIQ") {
+              return MultiBlocProvider(
+                providers: [
+                  BlocProvider(create: (context) => getIt<VisitorTvCubit>()),
+                  BlocProvider(
+                    create: (context) => LocalizationCubit()..initialize(),
+                  ),
+                ],
+                child: VisitorTvPage(
+                  videoUrl:
+                      state.dashboardData?.videoZone != null &&
+                          state.dashboardData!.videoZone.isNotEmpty
+                      ? state.dashboardData?.videoZone[0].videoUrl
+                      : null,
+                ),
+              );
+            }
+            if (state.dashboardData?.profileName == "Meeting") {
+              return BlocProvider(
+                create: (context) => getIt<MeetingTvBloc>(),
+                child: MeetingTvPage(
+                  videoUrl:
+                      state.dashboardData?.videoZone != null &&
+                          state.dashboardData!.videoZone.isNotEmpty
+                      ? state.dashboardData?.videoZone[0].videoUrl
+                      : null,
+                ),
+              );
+            }
+            changeOr();
             if (layout?.name == "Banner Layout") {
               return _buildBannerLayout(state);
             }
@@ -219,7 +223,8 @@ class _DashboardViewState extends State<DashboardView>
                   descendantsAreFocusable: true,
                   child: Column(
                     children: <Widget>[
-                      if (tickerItems.isNotEmpty &&
+                      if (state.dashboardData != null &&
+                          (state.dashboardData!.tickerZone.isNotEmpty) &&
                           state
                                   .dashboardData
                                   ?.layout
@@ -227,12 +232,7 @@ class _DashboardViewState extends State<DashboardView>
                                   .tickerZone
                                   ?.position !=
                               'bottom')
-                        Expanded(
-                          child: NewsTicker(
-                            items: tickerItems,
-                            controller: _tickerScrollController,
-                          ),
-                        ),
+                        Expanded(child: NewsTicker()),
                       FocusTraversalGroup(
                         policy: const RecentFocusTraversalPolicy(
                           group: FocusGroup.header,
@@ -248,7 +248,8 @@ class _DashboardViewState extends State<DashboardView>
                             ? const SizedBox()
                             : page[selectedTabIndex],
                       ),
-                      if (tickerItems.isNotEmpty &&
+                      if (state.dashboardData != null &&
+                          (state.dashboardData!.tickerZone.isNotEmpty) &&
                           state
                                   .dashboardData
                                   ?.layout
@@ -256,10 +257,7 @@ class _DashboardViewState extends State<DashboardView>
                                   .tickerZone
                                   ?.position ==
                               'bottom')
-                        NewsTicker(
-                          items: tickerItems,
-                          controller: _tickerScrollController,
-                        ),
+                        NewsTicker(),
                     ],
                   ),
                 ),
@@ -327,12 +325,7 @@ class _DashboardViewState extends State<DashboardView>
           if (tickerItems.isNotEmpty &&
               state.dashboardData?.layout.configJson.tickerZone?.position !=
                   'bottom')
-            Expanded(
-              child: NewsTicker(
-                items: tickerItems,
-                controller: _tickerScrollController,
-              ),
-            ),
+            Expanded(child: NewsTicker()),
 
           CarouselBanner(
             category: bannerZone.first.category ?? "",
@@ -342,12 +335,7 @@ class _DashboardViewState extends State<DashboardView>
           if (tickerItems.isNotEmpty &&
               state.dashboardData?.layout.configJson.tickerZone?.position ==
                   'bottom')
-            Expanded(
-              child: NewsTicker(
-                items: tickerItems,
-                controller: _tickerScrollController,
-              ),
-            ),
+            Expanded(child: NewsTicker()),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:equatable/equatable.dart';
@@ -65,10 +66,27 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
         final localDeviceId = await _generateDeviceId();
         final location = "Defualt Location";
 
+        final view = PlatformDispatcher.instance.views.first;
+
+        final physicalSize = view.physicalSize;
+        final devicePixelRatio = view.devicePixelRatio;
+
+        final logicalWidth = physicalSize.width / devicePixelRatio;
+        final logicalHeight = physicalSize.height / devicePixelRatio;
+
+        final orientation = logicalWidth > logicalHeight
+            ? "horizontal"
+            : "vertical";
+
+        final size =
+            "${physicalSize.width.toInt()}X${physicalSize.height.toInt()}";
+
         final registrationData = {
           'deviceId': localDeviceId,
           'location': location,
           'appVersion': appVersion,
+          "orientation": orientation,
+          "size": size,
         };
 
         debugPrint(

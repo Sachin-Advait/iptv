@@ -21,4 +21,8 @@ class AppImages {
       'assets/images/visitor_management.svg';
   static const String play = 'assets/images/play.svg';
   static const String user = 'assets/images/user.png';
+
+  static const String bgSvg = 'assets/images/BG.png';
+  static const String topView = 'assets/images/top_view.png';
+  static const String visitorLogo = 'assets/images/visitor_logo.svg';
 }

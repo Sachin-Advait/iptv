@@ -1,14 +1,56 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
-import 'package:oman_tv/models/dashboard_model.dart';
 import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
 
-class NewsTicker extends StatelessWidget {
-  final List<TickerZone> items;
-  final ScrollController controller;
+class NewsTicker extends StatefulWidget {
+  const NewsTicker({super.key, this.color});
 
-  const NewsTicker({super.key, required this.items, required this.controller});
+  final Color? color;
+
+  @override
+  State<NewsTicker> createState() => _NewsTickerState();
+}
+
+class _NewsTickerState extends State<NewsTicker> {
+  Timer? _tickerTimer;
+  late ScrollController _tickerScrollController;
+
+  @override
+  void initState() {
+    _tickerScrollController = ScrollController();
+    super.initState();
+  }
+
+  void _startTickerAutoScroll() {
+    _tickerTimer?.cancel();
+
+    _tickerTimer = Timer.periodic(const Duration(milliseconds: 30), (_) {
+      if (_tickerScrollController.hasClients) {
+        final max = _tickerScrollController.position.maxScrollExtent;
+        final current = _tickerScrollController.offset;
+
+        if (current >= max) {
+          _tickerScrollController.jumpTo(0);
+        } else {
+          _tickerScrollController.jumpTo(current + 2);
+        }
+      }
+    });
+  }
+
+  void _stopTickerAutoScroll() {
+    _tickerTimer?.cancel();
+  }
+
+  @override
+  void dispose() {
+    _tickerTimer?.cancel();
+    _tickerScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +58,21 @@ class NewsTicker extends StatelessWidget {
       builder: (context, state) {
         if (state.dashboardStatus == DashboardStatus.loading ||
             state.dashboardStatus == DashboardStatus.initial) {
-          return TickerShimmer(scrollController: controller);
+          return TickerShimmer(scrollController: _tickerScrollController);
         }
-        if (items.isEmpty) return const SizedBox();
+        if (state.dashboardData?.tickerZone.isEmpty ?? true) {
+          return const SizedBox();
+        }
+
+        if (state.dashboardStatus == DashboardStatus.success &&
+            state.dashboardData!.tickerZone.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _startTickerAutoScroll();
+          });
+        } else {
+          _stopTickerAutoScroll();
+        }
+
         return Container(
           height: 40,
           margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -27,21 +81,22 @@ class NewsTicker extends StatelessWidget {
             child: SizedBox(
               height: 40,
               child: ListView.builder(
-                controller: controller,
+                controller: _tickerScrollController,
                 scrollDirection: Axis.horizontal,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
+                itemCount: state.dashboardData?.tickerZone.length,
                 itemBuilder: (context, index) {
-                  final title = items[index].title;
+                  final title = state.dashboardData!.tickerZone[index].title;
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Center(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
+                          color: widget.color ?? AppColors.almostBlack,
                         ),
                       ),
                     ),

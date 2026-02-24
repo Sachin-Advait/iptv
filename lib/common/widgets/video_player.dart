@@ -5,6 +5,7 @@ import 'package:oman_tv/configs/theme/app_theme.dart';
 
 class VideoView extends StatefulWidget {
   final String videoUrl;
+
   const VideoView({super.key, required this.videoUrl});
 
   @override
@@ -14,24 +15,24 @@ class VideoView extends StatefulWidget {
 class _VideoViewState extends State<VideoView> {
   VlcPlayerController? _controller;
   final _multicastLock = FlutterMulticastLock();
+
   bool _multicastLockHeld = false;
+  bool _isLoading = true;
+  bool _hasError = false;
+
   String _status = "Starting...";
 
   @override
   void initState() {
     super.initState();
-    try {
-      _startPlayback();
-    } catch (e) {
-      throw Exception('1. App crashed due to $e');
-    }
+    _startPlayback();
   }
 
   Future<void> _startPlayback() async {
     final url = widget.videoUrl.trim();
 
     try {
-      // Acquire multicast lock only for multicast/udp streams (Wi-Fi use case)
+      // Acquire multicast lock only for UDP/RTP streams
       if (_isUdp(url)) {
         try {
           await _multicastLock.acquireMulticastLock();
@@ -43,8 +44,8 @@ class _VideoViewState extends State<VideoView> {
       }
 
       final options = VlcPlayerOptions(
-        advanced: VlcAdvancedOptions([VlcAdvancedOptions.networkCaching(300)]),
-        extras: [
+        advanced: VlcAdvancedOptions([VlcAdvancedOptions.networkCaching(500)]),
+        extras: const [
           '--clock-jitter=0',
           '--clock-synchro=0',
           '--no-drop-late-frames',
@@ -64,6 +65,27 @@ class _VideoViewState extends State<VideoView> {
 
         if (!mounted) return;
 
+        // 🔄 Buffering
+        if (value.isBuffering) {
+          if (!_isLoading) {
+            setState(() {
+              _isLoading = true;
+              _status = "Buffering...";
+            });
+          }
+        }
+
+        // ▶ Playing
+        if (value.isPlaying) {
+          if (_isLoading) {
+            setState(() {
+              _isLoading = false;
+              _status = "";
+            });
+          }
+        }
+
+        // ❌ Error
         if (value.hasError) {
           final error = value.errorDescription;
 
@@ -82,6 +104,8 @@ class _VideoViewState extends State<VideoView> {
 
       setState(() {
         _controller = ctrl;
+        _isLoading = true;
+        _hasError = false;
         _status = "Loading stream...";
       });
     } catch (e) {
@@ -91,8 +115,13 @@ class _VideoViewState extends State<VideoView> {
 
   void _setError(String message) {
     debugPrint("[VIDEO ERROR] $message");
+
+    if (!mounted) return;
+
     setState(() {
       _status = message;
+      _isLoading = false;
+      _hasError = true;
       _controller?.stop();
       _controller?.dispose();
       _controller = null;
@@ -122,31 +151,67 @@ class _VideoViewState extends State<VideoView> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: ctrl == null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      _status,
-                      textAlign: TextAlign.center,
-                      style: context.semiBold.copyWith(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : SizedBox.expand(
+      body: Stack(
+        children: [
+          // 🎥 Video Player
+          if (ctrl != null && !_hasError)
+            SizedBox.expand(
               child: VlcPlayer(
                 controller: ctrl,
-                aspectRatio: 16 / 9,
-                placeholder: const Center(child: CircularProgressIndicator()),
+                aspectRatio: ctrl.value.aspectRatio == 0
+                    ? 16 / 9
+                    : ctrl.value.aspectRatio,
+                placeholder: const SizedBox(),
               ),
             ),
+
+          // 🔄 Loading / Buffering
+          if (_isLoading && !_hasError)
+            Container(
+              color: Colors.black,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(color: Colors.white),
+                    const SizedBox(height: 16),
+                    Text(
+                      _status,
+                      style: context.semiBold.copyWith(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // ❌ Error State
+          if (_hasError)
+            Container(
+              color: Colors.black,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.redAccent,
+                      size: 60,
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        _status,
+                        textAlign: TextAlign.center,
+                        style: context.semiBold.copyWith(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
