@@ -44,6 +44,7 @@ class _HomeViewState extends State<HomeView> implements FocusListener {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: ListView(
+        padding: EdgeInsets.zero,
         children: [
           FocusTraversalGroup(
             policy: const RecentFocusTraversalPolicy(group: FocusGroup.button),

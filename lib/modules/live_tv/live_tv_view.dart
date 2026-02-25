@@ -39,6 +39,7 @@ class _LiveTVViewState extends State<LiveTVView> implements FocusListener {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: ListView(
+        padding: EdgeInsets.zero,
         children: [
           FocusTraversalGroup(
             policy: const RecentFocusTraversalPolicy(group: FocusGroup.button),

@@ -16,7 +16,8 @@ class AnnouncementView extends StatelessWidget {
           vertical: 10.widthMultiplier,
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.stretch, // ← stretch to fill height
           children: [
             // Meeting Rooms Section
             Expanded(child: _buildMeetingRoomsSection(context)),
@@ -75,6 +76,8 @@ class AnnouncementView extends StatelessWidget {
             statusColor: const Color(0xFF4CAF50),
             isFree: true,
           ),
+          // Fill remaining space
+          const Spacer(),
         ],
       ),
     );
@@ -159,7 +162,9 @@ class AnnouncementView extends StatelessWidget {
         color: AppColors.lightBeige.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(20.radiusMultipier),
       ),
-      child: ListView(
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Now Serving',
@@ -228,6 +233,8 @@ class AnnouncementView extends StatelessWidget {
               ),
             ],
           ),
+          // Fill remaining space
+          const Spacer(),
         ],
       ),
     );
@@ -277,7 +284,7 @@ class AnnouncementView extends StatelessWidget {
             tokenNumber,
             style: context.bold.copyWith(
               fontSize: 18.textMultiplier,
-              color: isVIP ? const Color(0xFF6B5D4F) : const Color(0xFF6B5D4F),
+              color: const Color(0xFF6B5D4F),
             ),
           ),
         ],
@@ -347,7 +354,9 @@ class AnnouncementView extends StatelessWidget {
         color: AppColors.lightBeige.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(20.radiusMultipier),
       ),
-      child: ListView(
+      // ← Replaced ListView with Column so it respects the parent's bounded height
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Announcements',
@@ -374,6 +383,8 @@ class AnnouncementView extends StatelessWidget {
             title: 'System Maintenance',
             subtitle: 'Friday, 6:00 PM',
           ),
+          // Fill remaining space
+          const Spacer(),
         ],
       ),
     );

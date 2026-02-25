@@ -86,7 +86,7 @@ class _CategoryCardState extends State<CategoryCard> {
                 ),
                 alignment: Alignment.center,
                 width: widget.isHeaderStyle
-                    ? 160.widthMultiplier
+                    ? 180.widthMultiplier
                     : 230.widthMultiplier,
                 padding: EdgeInsets.symmetric(
                   vertical: widget.isHeaderStyle

@@ -50,7 +50,6 @@ class _CustomTabState extends State<CustomTab> {
           });
         },
         child: Container(
-          height: 50,
           alignment: Alignment.bottomCenter,
           margin: EdgeInsets.symmetric(horizontal: 6.widthMultiplier),
           padding: EdgeInsets.symmetric(

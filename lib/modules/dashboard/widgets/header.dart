@@ -28,11 +28,12 @@ class Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60.heightMultiplier,
       color: AppColors.bg,
-      padding: EdgeInsets.symmetric(
-        horizontal: 24.widthMultiplier,
-        vertical: 12.heightMultiplier,
+      padding: EdgeInsets.fromLTRB(
+        24.widthMultiplier,
+        5.heightMultiplier,
+        24.widthMultiplier,
+        12.heightMultiplier,
       ),
       child: Row(
         children: [
@@ -64,9 +65,10 @@ class Header extends StatelessWidget {
               // border: _isFocused
               //     ? Border.all(color: AppColors.primary, width: 3)
               //     : null,
-            ),
-            child: ClipOval(
-              child: Image.asset(AppImages.user, fit: BoxFit.cover),
+              image: DecorationImage(
+                image: AssetImage(AppImages.user),
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ],

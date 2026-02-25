@@ -44,6 +44,10 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
+// flutter: 1210.0
+// flutter: 834.0
+// 961.5022957581195
+// I/flutter (16493): 540.8450413639423
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
@@ -51,19 +55,16 @@ class _MyAppState extends State<MyApp> {
       create: (context) => getIt<DashboardCubit>(),
       child: LayoutBuilder(
         builder: (context, constraints) => ScreenUtilInit(
-          designSize: Size(constraints.maxWidth, constraints.maxHeight),
+          // designSize: Size(constraints.maxWidth, constraints.maxHeight),
+          designSize: Size(961, 540),
           minTextAdapt: true,
           ensureScreenSize: true,
           splitScreenMode: true,
           builder: (context, child) {
-            final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
-
             AppScreenUtil().init(constraints);
 
             return MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: TextScaler.linear(isTablet ? 1.2 : 1.0)),
+              data: MediaQuery.of(context),
               child: MaterialApp(
                 initialRoute: Routes.splash,
                 navigatorKey: GlobalKeys.navigatorKey,

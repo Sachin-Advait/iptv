@@ -38,12 +38,11 @@ class _CatchUpViewState extends State<CatchUpView> implements FocusListener {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: ListView(
+        padding: EdgeInsets.zero,
         children: [
           FocusTraversalGroup(
             policy: const RecentFocusTraversalPolicy(group: FocusGroup.button),
-            child: CarouselBanner(
-              category: 'Catch-UP',
-            ),
+            child: CarouselBanner(category: 'Catch-UP'),
           ),
           20.verticalSpace,
           SizedBox(

@@ -233,13 +233,16 @@ class _DashboardViewState extends State<DashboardView>
                                   ?.position !=
                               'bottom')
                         Expanded(child: NewsTicker()),
-                      FocusTraversalGroup(
-                        policy: const RecentFocusTraversalPolicy(
-                          group: FocusGroup.header,
-                        ),
-                        child: Header(
-                          currentIndex: selectedTabIndex,
-                          userSelected: isUserSelected,
+                      SafeArea(
+                        bottom: false,
+                        child: FocusTraversalGroup(
+                          policy: const RecentFocusTraversalPolicy(
+                            group: FocusGroup.header,
+                          ),
+                          child: Header(
+                            currentIndex: selectedTabIndex,
+                            userSelected: isUserSelected,
+                          ),
                         ),
                       ),
 

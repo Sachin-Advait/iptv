@@ -38,6 +38,7 @@ class _VodViewState extends State<VodView> implements FocusListener {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: ListView(
+        padding: EdgeInsets.zero,
         children: [
           FocusTraversalGroup(
             policy: const RecentFocusTraversalPolicy(group: FocusGroup.button),
