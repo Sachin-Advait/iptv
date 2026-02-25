@@ -43,7 +43,7 @@ class UpcomingMeetings extends StatelessWidget {
     final double cardHeight = isLandscape && rowCount > 0
         ? ((size.height - reservedLandscape - cardGap * (rowCount - 1)) /
                   rowCount)
-              .clamp(50.0, 100.0)
+              .clamp(50.0, 90.0)
         : 0;
 
     return Column(

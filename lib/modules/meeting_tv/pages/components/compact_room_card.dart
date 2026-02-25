@@ -23,7 +23,7 @@ class CompactRoomCard extends StatelessWidget {
     // Scale everything relative to screen height so cards fill nicely
     final screenH = MediaQuery.of(context).size.height;
     // portrait baseline 1366, landscape baseline 834 (iPad Pro 11")
-    final scale = isLandscape ? (screenH / 834).clamp(0.7, 1.4) : 1.0;
+    final scale = isLandscape ? (screenH / 734).clamp(0.7, 1.4) : 1.0;
 
     final double nameFontSize = 16 * scale;
     final double infoFontSize = 13 * scale;
@@ -77,7 +77,7 @@ class CompactRoomCard extends StatelessWidget {
 
           SizedBox(
             height: booked && room.currentMeeting != null
-                ? innerGap * 0.6
+                ? innerGap * 0
                 : innerGap,
           ),
 

@@ -185,6 +185,12 @@ class _TvData {
 // =============================================================================
 // LANDSCAPE layout  (wide screen — original portrait design rotated)
 // =============================================================================
+// ── REPLACEMENT for _LandscapeLayout in home_screen.dart ──────────────────
+//
+// Key change: when there is exactly 1 busy room in landscape mode, we no longer
+// pass it to UpcomingMeetings (right column). Instead we pass
+// `injectBusyInLeft: true` to CurrentMeetings so it renders the busy card
+// above the Available Rooms grid on the LEFT — keeping the right column clean.
 
 class _LandscapeLayout extends StatelessWidget {
   const _LandscapeLayout({
@@ -204,15 +210,19 @@ class _LandscapeLayout extends StatelessWidget {
     final d = _TvData(tvData);
     final size = MediaQuery.of(context).size;
 
-    // Scale against 1024 logical-px landscape height baseline (iPad landscape).
     final scaleFactor = size.height / 1024;
 
     final hasVideo = videoUrl != null && (videoUrl?.isNotEmpty ?? false);
 
+    // In landscape, when there is exactly 1 busy room we inject it into the
+    // LEFT column (CurrentMeetings) to avoid the right column overflowing.
+    final bool injectBusyInLeft =
+        d.bookedRooms.length == 1;
+
     return Column(
       children: [
         // ── Header ────────────────────────────────────────────────────────────
-        SizedBox(height: 8 * scaleFactor),
+        SizedBox(height: 28 * scaleFactor),
         _TvHeader(currentTime: currentTime, scaleFactor: scaleFactor),
         SizedBox(height: 8 * scaleFactor),
 
@@ -223,7 +233,7 @@ class _LandscapeLayout extends StatelessWidget {
           bookedRoomsLength: d.bookedRooms.length,
           scaleFactor: scaleFactor,
         ),
-        SizedBox(height: 10 * scaleFactor),
+        SizedBox(height: 20 * scaleFactor),
 
         // ── Main content (fills remaining space) ──────────────────────────────
         Expanded(
@@ -232,7 +242,7 @@ class _LandscapeLayout extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Left — current / available rooms
+                // LEFT — busy (injected when 1 busy room) + available rooms
                 Expanded(
                   flex: 3,
                   child: CurrentMeetings(
@@ -240,10 +250,15 @@ class _LandscapeLayout extends StatelessWidget {
                     bookedRooms: d.bookedRooms,
                     freeRooms: d.freeRooms,
                     fadeDuration: fadeDuration,
+                    // Inject the single busy room into the left column so the
+                    // right column stays as Upcoming-only (no overflow).
+                    injectBusyInLeft: injectBusyInLeft,
                   ),
                 ),
                 SizedBox(width: 16 * scaleFactor),
-                // Right — upcoming + optional video stacked vertically
+                // RIGHT — upcoming + optional video
+                // We only pass busyRooms to UpcomingMeetings when there are
+                // MORE than 1 busy room (portrait/multi-busy behaviour).
                 Expanded(
                   flex: 4,
                   child: Column(
@@ -252,7 +267,9 @@ class _LandscapeLayout extends StatelessWidget {
                         child: UpcomingMeetings(
                           upcomingRoom: d.upcomingRooms,
                           fadeDuration: fadeDuration,
-                          busyRooms: d.bookedRooms,
+                          // Don't inject busy here in landscape 1-busy case —
+                          // it's already shown on the left.
+                          busyRooms: injectBusyInLeft ? [] : d.bookedRooms,
                         ),
                       ),
                       if (hasVideo) ...[
@@ -282,7 +299,6 @@ class _LandscapeLayout extends StatelessWidget {
     );
   }
 }
-
 // =============================================================================
 // PORTRAIT layout  (original vertical design — unchanged logic)
 // =============================================================================

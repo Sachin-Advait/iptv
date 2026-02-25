@@ -61,7 +61,7 @@ class _NewsTickerState extends State<NewsTicker> {
           return TickerShimmer(scrollController: _tickerScrollController);
         }
         if (state.dashboardData?.tickerZone.isEmpty ?? true) {
-          return const SizedBox();
+          return const SizedBox(height: 40);
         }
 
         if (state.dashboardStatus == DashboardStatus.success &&
