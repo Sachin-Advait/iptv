@@ -36,22 +36,23 @@ class _MeetingTvPageState extends State<MeetingTvPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    changeOr();
+    _unlockAllOrientations();
     _currentTime = DateTime.now();
 
-    // Load data — bloc handles WS + periodic refresh internally
     context.read<MeetingTvBloc>().add(LoadTvDisplayData());
 
-    // Clock timer
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _currentTime = DateTime.now());
     });
   }
 
-  Future<void> changeOr() async {
+  /// Allow both portrait and landscape so the OS can rotate freely.
+  Future<void> _unlockAllOrientations() async {
     await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitDown,
       DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
     ]);
   }
 
@@ -88,7 +89,6 @@ class _MeetingTvPageState extends State<MeetingTvPage>
             }
           },
           builder: (context, state) {
-            // ── 1. Full-screen error — never loaded successfully ─────────────
             if (state is TvDisplayError) {
               return OrderErrorView(
                 message: state.message,
@@ -99,7 +99,6 @@ class _MeetingTvPageState extends State<MeetingTvPage>
               );
             }
 
-            // ── 2. Loaded UI — banner overlaid if network drops ──────────────
             if (state is TvDisplayLoaded) {
               return Stack(
                 children: [
@@ -109,15 +108,12 @@ class _MeetingTvPageState extends State<MeetingTvPage>
                     fadeDuration: fadeDuration,
                     videoUrl: widget.videoUrl,
                   ),
-
-                  // Network-drop banner over content — never replaces it
                   if (!state.isNetworkConnected)
                     const NoInternetBanner(top: 60),
                 ],
               );
             }
 
-            // ── 3. Initial loading ───────────────────────────────────────────
             return EmptyContent();
           },
         ),
@@ -127,7 +123,7 @@ class _MeetingTvPageState extends State<MeetingTvPage>
 }
 
 // =============================================================================
-// TV content — extracted so the Stack stays readable
+// TV content — orientation-aware
 // =============================================================================
 
 class _TvContent extends StatelessWidget {
@@ -145,82 +141,223 @@ class _TvContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentRooms = tvData.currentRooms ?? [];
-    final bookedRooms = currentRooms.where((r) => r.booked!).toList();
-    final freeRooms = currentRooms.where((r) => !r.booked!).toList();
-    final upcomingRooms = tvData.upcomingRooms ?? [];
-    final statistics = tvData.statistics;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
-    final bookedCount = statistics?.busyRooms ?? bookedRooms.length;
-    final freeCount = statistics?.freeRooms ?? freeRooms.length;
+    return isLandscape
+        ? _LandscapeLayout(
+            tvData: tvData,
+            currentTime: currentTime,
+            fadeDuration: fadeDuration,
+            videoUrl: videoUrl,
+          )
+        : _PortraitLayout(
+            tvData: tvData,
+            currentTime: currentTime,
+            fadeDuration: fadeDuration,
+            videoUrl: videoUrl,
+          );
+  }
+}
 
-    final screenHeight = MediaQuery.of(context).size.height;
-    final scaleFactor = screenHeight / 1920;
+// =============================================================================
+// Shared data helper
+// =============================================================================
+
+class _TvData {
+  _TvData(TvDisplayDetails tvData)
+    : bookedRooms = (tvData.currentRooms ?? [])
+          .where((r) => r.booked!)
+          .toList(),
+      freeRooms = (tvData.currentRooms ?? []).where((r) => !r.booked!).toList(),
+      upcomingRooms = tvData.upcomingRooms ?? [],
+      statistics = tvData.statistics;
+
+  final List<Room> bookedRooms;
+  final List<Room> freeRooms;
+  final List<Room> upcomingRooms;
+  final dynamic statistics;
+
+  int get bookedCount => statistics?.busyRooms ?? bookedRooms.length;
+  int get freeCount => statistics?.freeRooms ?? freeRooms.length;
+}
+
+// =============================================================================
+// LANDSCAPE layout  (wide screen — original portrait design rotated)
+// =============================================================================
+
+class _LandscapeLayout extends StatelessWidget {
+  const _LandscapeLayout({
+    required this.tvData,
+    required this.currentTime,
+    required this.fadeDuration,
+    required this.videoUrl,
+  });
+
+  final TvDisplayDetails tvData;
+  final DateTime currentTime;
+  final Duration fadeDuration;
+  final String? videoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = _TvData(tvData);
+    final size = MediaQuery.of(context).size;
+
+    // Scale against 1024 logical-px landscape height baseline (iPad landscape).
+    final scaleFactor = size.height / 1024;
+
+    final hasVideo = videoUrl != null && (videoUrl?.isNotEmpty ?? false);
+
+    return Column(
+      children: [
+        // ── Header ────────────────────────────────────────────────────────────
+        SizedBox(height: 8 * scaleFactor),
+        _TvHeader(currentTime: currentTime, scaleFactor: scaleFactor),
+        SizedBox(height: 8 * scaleFactor),
+
+        // ── Stats row ─────────────────────────────────────────────────────────
+        _TvStatRow(
+          bookedCount: d.bookedCount,
+          freeCount: d.freeCount,
+          bookedRoomsLength: d.bookedRooms.length,
+          scaleFactor: scaleFactor,
+        ),
+        SizedBox(height: 10 * scaleFactor),
+
+        // ── Main content (fills remaining space) ──────────────────────────────
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16 * scaleFactor),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Left — current / available rooms
+                Expanded(
+                  flex: 3,
+                  child: CurrentMeetings(
+                    showBusyRooms: d.bookedRooms.isNotEmpty,
+                    bookedRooms: d.bookedRooms,
+                    freeRooms: d.freeRooms,
+                    fadeDuration: fadeDuration,
+                  ),
+                ),
+                SizedBox(width: 16 * scaleFactor),
+                // Right — upcoming + optional video stacked vertically
+                Expanded(
+                  flex: 4,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: UpcomingMeetings(
+                          upcomingRoom: d.upcomingRooms,
+                          fadeDuration: fadeDuration,
+                          busyRooms: d.bookedRooms,
+                        ),
+                      ),
+                      if (hasVideo) ...[
+                        SizedBox(height: 10 * scaleFactor),
+                        SizedBox(
+                          height: size.height * 0.32,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: VideoView(videoUrl: videoUrl!),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        SizedBox(height: 8 * scaleFactor),
+
+        // ── News ticker ───────────────────────────────────────────────────────
+        NewsTicker(color: AppColors.white),
+        SizedBox(height: 8 * scaleFactor),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// PORTRAIT layout  (original vertical design — unchanged logic)
+// =============================================================================
+
+class _PortraitLayout extends StatelessWidget {
+  const _PortraitLayout({
+    required this.tvData,
+    required this.currentTime,
+    required this.fadeDuration,
+    required this.videoUrl,
+  });
+
+  final TvDisplayDetails tvData;
+  final DateTime currentTime;
+  final Duration fadeDuration;
+  final String? videoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = _TvData(tvData);
+    final size = MediaQuery.of(context).size;
+    final scaleFactor = size.height / 1920;
+
+    final hasVideo = videoUrl != null && (videoUrl?.isNotEmpty ?? false);
 
     return ListView(
       padding: EdgeInsets.zero,
       children: [
         const SizedBox(height: 10),
-
-        // ── Header ────────────────────────────────────────────────────────────
         _TvHeader(currentTime: currentTime, scaleFactor: scaleFactor),
-
         SizedBox(
-          height: bookedCount == 0 ? 10 * scaleFactor : 20 * scaleFactor,
+          height: d.bookedCount == 0 ? 10 * scaleFactor : 20 * scaleFactor,
         ),
-
-        // ── Stats ─────────────────────────────────────────────────────────────
         _TvStatRow(
-          bookedCount: bookedCount,
-          freeCount: freeCount,
-          bookedRoomsLength: bookedRooms.length,
+          bookedCount: d.bookedCount,
+          freeCount: d.freeCount,
+          bookedRoomsLength: d.bookedRooms.length,
           scaleFactor: scaleFactor,
         ),
-
         SizedBox(
-          height: bookedCount == 0 ? 30 * scaleFactor : 40 * scaleFactor,
+          height: d.bookedCount == 0 ? 30 * scaleFactor : 40 * scaleFactor,
         ),
-
-        // ── Main content ──────────────────────────────────────────────────────
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 22 * scaleFactor),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CurrentMeetings(
-                showBusyRooms: bookedRooms.isNotEmpty,
-                bookedRooms: bookedRooms,
-                freeRooms: freeRooms,
+                showBusyRooms: d.bookedRooms.isNotEmpty,
+                bookedRooms: d.bookedRooms,
+                freeRooms: d.freeRooms,
                 fadeDuration: fadeDuration,
               ),
               SizedBox(width: 28 * scaleFactor),
               Expanded(
                 child: UpcomingMeetings(
-                  upcomingRoom: upcomingRooms,
+                  upcomingRoom: d.upcomingRooms,
                   fadeDuration: fadeDuration,
-                  busyRooms: bookedRooms,
+                  busyRooms: d.bookedRooms,
                 ),
               ),
             ],
           ),
         ),
-
-        // ── Video ─────────────────────────────────────────────────────────────
-        if (videoUrl != null && (videoUrl?.isNotEmpty ?? false))
+        if (hasVideo)
           Container(
-            height: screenHeight * .24,
+            height: size.height * .24,
             padding: EdgeInsets.symmetric(horizontal: 22 * scaleFactor),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: VideoView(videoUrl: videoUrl!),
             ),
           ),
-
         SizedBox(height: 20 * scaleFactor),
-
-        // ── News ticker ───────────────────────────────────────────────────────
         NewsTicker(color: AppColors.white),
-
         SizedBox(height: 20 * scaleFactor),
       ],
     );
@@ -228,7 +365,7 @@ class _TvContent extends StatelessWidget {
 }
 
 // =============================================================================
-// Header
+// Header  (shared)
 // =============================================================================
 
 class _TvHeader extends StatelessWidget {
@@ -237,7 +374,7 @@ class _TvHeader extends StatelessWidget {
   final DateTime currentTime;
   final double scaleFactor;
 
-  String formatDate(DateTime date) {
+  String _formatDate(DateTime date) {
     const weekdays = [
       'Monday',
       'Tuesday',
@@ -247,7 +384,6 @@ class _TvHeader extends StatelessWidget {
       'Saturday',
       'Sunday',
     ];
-
     const months = [
       'Jan',
       'Feb',
@@ -262,11 +398,7 @@ class _TvHeader extends StatelessWidget {
       'Nov',
       'Dec',
     ];
-
-    String weekday = weekdays[date.weekday - 1];
-    String month = months[date.month - 1];
-
-    return '$weekday, $month ${date.day}';
+    return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
   }
 
   @override
@@ -299,7 +431,8 @@ class _TvHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${currentTime.hour.toString().padLeft(2, '0')} : ${currentTime.minute.toString().padLeft(2, '0')}',
+                '${currentTime.hour.toString().padLeft(2, '0')} : '
+                '${currentTime.minute.toString().padLeft(2, '0')}',
                 style: TextStyle(
                   fontSize: 26 * scaleFactor,
                   fontWeight: FontWeight.w700,
@@ -307,7 +440,7 @@ class _TvHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                formatDate(currentTime),
+                _formatDate(currentTime),
                 style: TextStyle(
                   fontSize: 16 * scaleFactor,
                   fontWeight: FontWeight.w500,
@@ -323,7 +456,7 @@ class _TvHeader extends StatelessWidget {
 }
 
 // =============================================================================
-// Stat row
+// Stat row  (shared)
 // =============================================================================
 
 class _TvStatRow extends StatelessWidget {
@@ -374,90 +507,3 @@ class _TvStatRow extends StatelessWidget {
     );
   }
 }
-
-// =============================================================================
-// News ticker
-// =============================================================================
-
-// class NewsTicker extends StatefulWidget {
-//   final double scaleFactor;
-
-//   const NewsTicker({super.key, required this.scaleFactor});
-
-//   @override
-//   State<NewsTicker> createState() => _NewsTickerState();
-// }
-
-// class _NewsTickerState extends State<NewsTicker> {
-//   late ScrollController _scrollController;
-//   Timer? _scrollTimer;
-
-//   final List<String> newsItems = [
-//     'Welcome to the Military and Security Services Pension Fund. We are happy to serve you.',
-//     'مرحبا بكم في صندوق تقاعد الأجهزة العسكرية والأمنية ، يسعدنا خدمتكم',
-//   ];
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _scrollController = ScrollController();
-//     WidgetsBinding.instance.addPostFrameCallback((_) => _startAutoScroll());
-//   }
-
-//   void _startAutoScroll() {
-//     _scrollTimer = Timer.periodic(const Duration(milliseconds: 30), (_) {
-//       if (_scrollController.hasClients) {
-//         final maxScroll = _scrollController.position.maxScrollExtent;
-//         final currentScroll = _scrollController.offset;
-
-//         if (currentScroll >= maxScroll) {
-//           _scrollController.jumpTo(0);
-//         } else {
-//           _scrollController.animateTo(
-//             currentScroll + 3,
-//             duration: const Duration(milliseconds: 30),
-//             curve: Curves.linear,
-//           );
-//         }
-//       }
-//     });
-//   }
-
-//   @override
-//   void dispose() {
-//     _scrollTimer?.cancel();
-//     _scrollController.dispose();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final newsText = newsItems.join('    -    ');
-//     final displayText = '$newsText    -    $newsText    -    $newsText';
-
-//     return Container(
-//       margin: EdgeInsets.symmetric(horizontal: 22 * widget.scaleFactor),
-//       child: ClipRRect(
-//         borderRadius: BorderRadius.circular(15 * widget.scaleFactor),
-//         child: SingleChildScrollView(
-//           controller: _scrollController,
-//           reverse: true,
-//           scrollDirection: Axis.horizontal,
-//           physics: const NeverScrollableScrollPhysics(),
-//           child: Container(
-//             alignment: Alignment.center,
-//             padding: EdgeInsets.symmetric(horizontal: 20 * widget.scaleFactor),
-//             child: Text(
-//               displayText,
-//               style: TextStyle(
-//                 fontSize: 45 * widget.scaleFactor,
-//                 fontWeight: FontWeight.bold,
-//                 color: AppColors.white,
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }

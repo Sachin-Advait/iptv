@@ -9,18 +9,35 @@ class CompactRoomCard extends StatelessWidget {
 
   String getRemaining(Meeting meeting) {
     if (meeting.remainingMinutes > 1) {
-      return '${meeting.remainingMinutes} min';
+      return '${meeting.remainingMinutes}';
     }
-
-    // Less than one minute → show seconds
-    return '${meeting.remainingSeconds} sec';
+    return '${meeting.remainingSeconds}';
   }
 
   @override
   Widget build(BuildContext context) {
     final booked = room.booked ?? false;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
+    // Scale everything relative to screen height so cards fill nicely
+    final screenH = MediaQuery.of(context).size.height;
+    // portrait baseline 1366, landscape baseline 834 (iPad Pro 11")
+    final scale = isLandscape ? (screenH / 834).clamp(0.7, 1.4) : 1.0;
+
+    final double nameFontSize = 16 * scale;
+    final double infoFontSize = 13 * scale;
+    final double capacityFontSize = 16 * scale;
+    final double organizerFontSize = 12 * scale;
+    final double timeFontSize = 14 * scale;
+    final double remainingFontSize = 15 * scale;
+    final double iconSize = isLandscape ? 15 * scale : 18.0;
+    final double pad = isLandscape ? 10 * scale : 14.0;
+    final double innerGap = isLandscape ? 24 * scale : 12.0;
+    final double availFontSize = 12 * scale;
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(pad),
       decoration: BoxDecoration(
         color: AppColors.green.withValues(alpha: .1),
         borderRadius: BorderRadius.circular(30),
@@ -43,11 +60,12 @@ class CompactRoomCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // ── Room name ──────────────────────────────────────────────────────
           Center(
             child: Text(
               room.name!,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: nameFontSize,
                 fontWeight: FontWeight.w600,
                 color: booked ? AppColors.red : AppColors.green,
               ),
@@ -57,43 +75,62 @@ class CompactRoomCard extends StatelessWidget {
             ),
           ),
 
-          booked && room.currentMeeting != null
-              ? const SizedBox(height: 12)
-              : const SizedBox(height: 22),
+          SizedBox(
+            height: booked && room.currentMeeting != null
+                ? innerGap * 0.6
+                : innerGap,
+          ),
+
+          // ── Location + capacity row ────────────────────────────────────────
           Row(
             children: [
-              const Icon(Icons.meeting_room, size: 18, color: AppColors.white),
-              const SizedBox(width: 6),
-              Text(
-                room.location!.split(',').first,
-                style: const TextStyle(fontSize: 15, color: AppColors.white),
+              const SizedBox(width: 10),
+              Icon(Icons.meeting_room, size: iconSize, color: AppColors.white),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  room.location!.split(',').first,
+                  style: TextStyle(
+                    fontSize: infoFontSize,
+                    color: AppColors.white,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              Spacer(),
-              const Icon(Icons.people, size: 20, color: AppColors.white),
-              const SizedBox(width: 6),
+              const Spacer(),
+              Icon(Icons.people, size: iconSize + 2, color: AppColors.white),
+              const SizedBox(width: 4),
               Text(
                 '${room.currentMeeting?.attendees ?? room.capacity}',
-                style: const TextStyle(fontSize: 18, color: AppColors.white),
+                style: TextStyle(
+                  fontSize: capacityFontSize,
+                  color: AppColors.white,
+                ),
               ),
+              const SizedBox(width: 10),
             ],
           ),
 
           const Spacer(),
+
+          // ── Booked state ───────────────────────────────────────────────────
           if (booked && room.currentMeeting != null) ...[
             Text(
               room.currentMeeting!.organizer,
-              style: const TextStyle(
-                fontSize: 13,
+              style: TextStyle(
+                fontSize: organizerFontSize,
                 fontWeight: FontWeight.w700,
                 color: AppColors.white,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 8),
-
+            SizedBox(height: innerGap * 0.5),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: 6 * scale,
+                vertical: 3 * scale,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.red,
                 borderRadius: BorderRadius.circular(6),
@@ -104,64 +141,71 @@ class CompactRoomCard extends StatelessWidget {
                   Text(
                     '${room.currentMeeting!.startTimeFormatted} - ${room.currentMeeting!.endTimeFormatted}',
                     style: TextStyle(
-                      fontSize: 17,
+                      fontSize: timeFontSize,
                       fontWeight: FontWeight.w500,
                       color: AppColors.white,
                     ),
                   ),
-                  const SizedBox(width: 3),
-                  const Icon(Icons.schedule, size: 18, color: AppColors.white),
-                  const SizedBox(width: 3),
+                  SizedBox(width: 3 * scale),
+                  Icon(Icons.schedule, size: iconSize, color: AppColors.white),
+                  SizedBox(width: 3 * scale),
                   Text(
                     getRemaining(room.currentMeeting!),
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: remainingFontSize,
                       fontWeight: FontWeight.w700,
                       color: AppColors.white,
                     ),
                   ),
-                  SizedBox(width: 3),
+                  SizedBox(width: 2 * scale),
                   if (room.currentMeeting!.remainingMinutes > 1)
                     Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        RichText(
-                          text: TextSpan(
-                            text: 'Min',
-                            style: TextStyle(
-                              fontSize: 8,
-                              color: AppColors.white,
-                            ),
+                        Text(
+                          'Min',
+                          style: TextStyle(
+                            fontSize: 7 * scale,
+                            color: AppColors.white,
                           ),
                         ),
-                        RichText(
-                          text: TextSpan(
-                            text: 'Left',
-                            style: TextStyle(
-                              fontSize: 8,
-                              color: AppColors.white,
-                            ),
+                        Text(
+                          'Left',
+                          style: TextStyle(
+                            fontSize: 7 * scale,
+                            color: AppColors.white,
                           ),
                         ),
                       ],
+                    )
+                  else
+                    Text(
+                      'sec',
+                      style: TextStyle(
+                        fontSize: 7 * scale,
+                        color: AppColors.white,
+                      ),
                     ),
                 ],
               ),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 4 * scale),
+
+            // ── Available state ────────────────────────────────────────────────
           ] else ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.check_circle,
                   color: AppColors.green,
-                  size: 18,
+                  size: iconSize,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Text(
                   'Available',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: availFontSize,
                     fontWeight: FontWeight.w700,
                     color: AppColors.green,
                   ),

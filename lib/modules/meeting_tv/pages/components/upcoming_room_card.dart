@@ -7,7 +7,17 @@ class UpcomingRoomCard extends StatelessWidget {
   final Room room;
   final bool isBusy;
 
-  const UpcomingRoomCard({super.key, required this.room, required this.isBusy});
+  /// When provided (landscape grid), the card fills this exact height and
+  /// scales its content accordingly. When null (portrait list), the card
+  /// sizes itself from MediaQuery as before.
+  final double? fixedHeight;
+
+  const UpcomingRoomCard({
+    super.key,
+    required this.room,
+    required this.isBusy,
+    this.fixedHeight,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,21 +27,40 @@ class UpcomingRoomCard extends StatelessWidget {
     final localStart = start?.toLocal();
     final localEnd = end?.toLocal();
 
-    // Format date (e.g., "2 Dec 25")
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
     final dateStr = localStart != null
         ? '${localStart.day} ${DateFormat('MMM').format(localStart)} ${localStart.year.toString().substring(2)}'
         : '';
 
-    // Format time range (e.g., "11:00 - 12:30")
-    String formatTime(DateTime dateTime) {
-      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    String formatTime(DateTime dt) =>
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+
+    // ── Height ──────────────────────────────────────────────────────────────
+    final double cardHeight;
+    if (fixedHeight != null && fixedHeight! > 0) {
+      cardHeight = fixedHeight!;
+    } else if (isLandscape) {
+      cardHeight = isBusy
+          ? MediaQuery.of(context).size.height * 0.10
+          : MediaQuery.of(context).size.height * 0.075;
+    } else {
+      cardHeight = isBusy
+          ? MediaQuery.of(context).size.height * 0.082
+          : MediaQuery.of(context).size.height * 0.06;
     }
 
+    // Scale font/icon sizes to the card height so content never overflows
+    final double scale = (cardHeight / 20).clamp(0.7, 1.4);
+    final double nameFz = 12 * scale;
+    final double subFz = 10 * scale;
+    final double iconSz = 13 * scale;
+    final double timeFz = 10 * scale;
+    final double badgeFz = 8 * scale;
+
     return Container(
-      height: isBusy
-          ? MediaQuery.of(context).size.height * .082
-          : MediaQuery.of(context).size.height * .06,
-      margin: EdgeInsets.only(bottom: isBusy ? 10 : 5),
+      height: cardHeight,
       decoration: BoxDecoration(
         color: booked
             ? AppColors.blue.withValues(alpha: .1)
@@ -44,34 +73,39 @@ class UpcomingRoomCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Main content
+          // ── Main content ─────────────────────────────────────────────────
           Padding(
-            padding: booked
-                ? const EdgeInsets.fromLTRB(10, 5, 5, 5)
-                : const EdgeInsets.fromLTRB(10, 10, 5, 10),
+            padding: EdgeInsets.fromLTRB(
+              10,
+              booked ? 4 : 8,
+              108,
+              booked ? 4 : 8,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Room name and date
+                // Room name + date badge
                 Row(
                   children: [
-                    Text(
-                      room.name!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
+                    Expanded(
+                      child: Text(
+                        room.name!,
+                        style: TextStyle(
+                          fontSize: nameFz,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.4,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    Spacer(),
                     if (booked && dateStr.isNotEmpty) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
+                          horizontal: 5,
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
@@ -80,8 +114,8 @@ class UpcomingRoomCard extends StatelessWidget {
                         ),
                         child: Text(
                           dateStr,
-                          style: const TextStyle(
-                            fontSize: 9,
+                          style: TextStyle(
+                            fontSize: badgeFz,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
@@ -90,8 +124,8 @@ class UpcomingRoomCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: 5),
-                // Status row
+                SizedBox(height: 3 * scale),
+                // Status / time
                 if (booked) ...[
                   Row(
                     children: [
@@ -104,118 +138,111 @@ class UpcomingRoomCard extends StatelessWidget {
                           color: AppColors.blue,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Row(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Column(
-                              children: [
-                                Text(
-                                  formatTime(localStart!),
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.white,
-                                  ),
-                                ),
-                                Text(
-                                  formatTime(localEnd!),
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.white,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              formatTime(localStart!),
+                              style: TextStyle(
+                                fontSize: timeFz,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.white,
+                              ),
+                            ),
+                            Text(
+                              formatTime(localEnd!),
+                              style: TextStyle(
+                                fontSize: timeFz,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.white,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        room.currentMeeting!.organizer,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          room.currentMeeting!.organizer,
+                          style: TextStyle(
+                            fontSize: subFz,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 12),
                     ],
                   ),
                 ] else ...[
                   Text(
                     'Available',
-                    style: const TextStyle(
-                      fontSize: 12,
+                    style: TextStyle(
+                      fontSize: subFz,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF4CAF50),
+                      color: const Color(0xFF4CAF50),
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          // Right side curved section with floor and capacity
+
+          // ── Right curved section ─────────────────────────────────────────
           Positioned(
             right: 0,
             top: 0,
+            bottom: 0,
             child: ClipPath(
               clipBehavior: Clip.antiAlias,
               clipper: CurvedCardClipper(),
               child: Container(
-                height: 450,
-                width: 120,
-                decoration: BoxDecoration(
-                  color: booked ? AppColors.blue : AppColors.green,
-                ),
+                width: 100,
+                color: booked ? AppColors.blue : AppColors.green,
               ),
             ),
           ),
           Positioned(
-            right: 0,
+            right: 5,
+            top: 0,
             bottom: 0,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 5),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Floor info
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.business, size: 16, color: AppColors.white),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Floor ${room.location?.split('st').first.split('nd').first ?? 1}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.white,
-                        ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.business, size: iconSz, color: AppColors.white),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Floor ${room.location?.split('st').first.split('nd').first ?? 1}',
+                      style: TextStyle(
+                        fontSize: subFz - 1,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.white,
                       ),
-                    ],
-                  ),
-                  // Capacity info
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.people, size: 16, color: AppColors.white),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${room.capacity ?? 0}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.white,
-                        ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 2 * scale),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.people, size: iconSz, color: AppColors.white),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${room.capacity ?? 0}',
+                      style: TextStyle(
+                        fontSize: subFz - 1,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white,
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -229,30 +256,13 @@ class CurvedCardClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final w = size.width;
     final h = size.height;
-
     final path = Path();
-
-    // --- Start top-left (flipped vertically) ---
     path.moveTo(20, h);
-
-    // Top-left inward curve (formerly bottom)
     path.quadraticBezierTo(0, h, 0, h - 10);
-
-    // Left vertical
     path.lineTo(0, h * 0.4);
-
-    // Big TOP curve (flipped from bottom)
-    path.quadraticBezierTo(
-      w * 0.1, // control X stays same
-      10,
-      w,
-      h * 0.08,
-    );
-
-    // Top-right rounded
+    path.quadraticBezierTo(w * 0.1, 10, w, h * 0.08);
     path.lineTo(100, h - 20);
     path.quadraticBezierTo(0, h, 0, h);
-
     path.close();
     return path;
   }
