@@ -7,15 +7,17 @@ class HoldTokens extends StatelessWidget {
     super.key,
     required this.upcomingTokens,
     required this.scaleFactor,
+    this.height,
   });
 
   final List<String> upcomingTokens;
   final double scaleFactor;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 200 * scaleFactor,
+      height: height ?? 200 * scaleFactor,
       decoration: BoxDecoration(
         color: AppColors.brownVeryDark,
         borderRadius: BorderRadius.circular(15 * scaleFactor),

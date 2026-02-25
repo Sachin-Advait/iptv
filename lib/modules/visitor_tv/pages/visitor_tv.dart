@@ -66,6 +66,8 @@ class _VisitorTvPageState extends State<VisitorTvPage>
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitDown,
       DeviceOrientation.portraitUp,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
     ]);
   }
 
@@ -84,112 +86,114 @@ class _VisitorTvPageState extends State<VisitorTvPage>
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            // Main content
-            BlocBuilder<VisitorTvCubit, VisitorTvState>(
-              builder: (context, state) {
-                if (state is TVDisplayError) {
-                  return CustomError(
-                    scaleFactor: scaleFactor,
-                    currentTime: _currentTime,
-                    isRTL: isRTL,
-                    state: state,
-                  );
-                }
-
-                if (state is TVDisplayLoaded) {
-                  return Stack(
-                    children: [
-                      BlocBuilder<LocalizationCubit, LocalizationState>(
-                        builder: (context, localizationState) {
-                          return TVContent(
-                            isRTL: isRTL,
-                            currentTime: _currentTime,
-                            scaleFactor: scaleFactor,
-                            tvState: state,
-                            videoUrl: widget.videoUrl,
-                          );
-                        },
-                      ),
-
-                      // Network status indicator
-                      if (!state.isNetworkConnected)
-                        Positioned(
-                          top: 20,
-                          right: 20,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16 * scaleFactor,
-                              vertical: 8 * scaleFactor,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.wifi_off,
-                                  color: Colors.white,
-                                  size: 20 * scaleFactor,
-                                ),
-                                SizedBox(width: 8 * scaleFactor),
-                                Text(
-                                  'No Internet Connection',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14 * scaleFactor,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                }
-
-                return Column(
-                  children: [
-                    SizedBox(height: 20),
-                    Header(
+        body: SafeArea(
+          child: Stack(
+            children: [
+              // Main content
+              BlocBuilder<VisitorTvCubit, VisitorTvState>(
+                builder: (context, state) {
+                  if (state is TVDisplayError) {
+                    return CustomError(
                       scaleFactor: scaleFactor,
                       currentTime: _currentTime,
                       isRTL: isRTL,
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.primary,
+                      state: state,
+                    );
+                  }
+
+                  if (state is TVDisplayLoaded) {
+                    return Stack(
+                      children: [
+                        BlocBuilder<LocalizationCubit, LocalizationState>(
+                          builder: (context, localizationState) {
+                            return TVContent(
+                              isRTL: isRTL,
+                              currentTime: _currentTime,
+                              scaleFactor: scaleFactor,
+                              tvState: state,
+                              videoUrl: widget.videoUrl,
+                            );
+                          },
+                        ),
+
+                        // Network status indicator
+                        if (!state.isNetworkConnected)
+                          Positioned(
+                            top: 20,
+                            right: 20,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16 * scaleFactor,
+                                vertical: 8 * scaleFactor,
                               ),
-                              strokeWidth: 4 * scaleFactor,
-                            ),
-                            SizedBox(height: 24 * scaleFactor),
-                            Text(
-                              'TV Display is Loading...',
-                              style: TextStyle(
-                                fontSize: 24 * scaleFactor,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.primary,
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.wifi_off,
+                                    color: Colors.white,
+                                    size: 20 * scaleFactor,
+                                  ),
+                                  SizedBox(width: 8 * scaleFactor),
+                                  Text(
+                                    'No Internet Connection',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14 * scaleFactor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            SizedBox(height: 70 * scaleFactor),
-                          ],
+                          ),
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      SizedBox(height: 20),
+                      Header(
+                        scaleFactor: scaleFactor,
+                        currentTime: _currentTime,
+                        isRTL: isRTL,
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.primary,
+                                ),
+                                strokeWidth: 4 * scaleFactor,
+                              ),
+                              SizedBox(height: 24 * scaleFactor),
+                              Text(
+                                'TV Display is Loading...',
+                                style: TextStyle(
+                                  fontSize: 24 * scaleFactor,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              SizedBox(height: 70 * scaleFactor),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ],
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

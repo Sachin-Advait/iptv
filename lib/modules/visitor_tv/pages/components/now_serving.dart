@@ -8,15 +8,17 @@ class NowServing extends StatelessWidget {
     super.key,
     required this.nowServing,
     required this.scaleFactor,
+    this.height,
   });
 
   final List<DisplayToken> nowServing;
   final double scaleFactor;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 200 * scaleFactor,
+      height: height ?? 200 * scaleFactor,
       decoration: BoxDecoration(
         color: AppColors.warmGray,
         borderRadius: BorderRadius.circular(15 * scaleFactor),
