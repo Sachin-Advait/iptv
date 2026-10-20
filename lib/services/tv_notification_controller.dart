@@ -9,6 +9,7 @@ class TvNotification {
   category; // EMERGENCY / WARNING / INFO / ANNOUNCEMENT / CELEBRATION
   final int durationSeconds;
   final bool playSound;
+  final bool addedToAnnouncements;
 
   const TvNotification({
     required this.id,
@@ -17,6 +18,7 @@ class TvNotification {
     required this.category,
     required this.durationSeconds,
     required this.playSound,
+    this.addedToAnnouncements = false,
   });
 
   factory TvNotification.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class TvNotification {
       category: (json['category'] as String? ?? 'INFO').toUpperCase(),
       durationSeconds: (json['durationSeconds'] as num?)?.toInt() ?? 15,
       playSound: json['playSound'] as bool? ?? true,
+      addedToAnnouncements: json['addedToAnnouncements'] as bool? ?? false,
     );
   }
 }

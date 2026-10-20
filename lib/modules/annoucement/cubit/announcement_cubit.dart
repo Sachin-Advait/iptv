@@ -9,6 +9,7 @@ import 'package:oman_tv/common/constants/api_constants.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/models/announcement_model.dart';
 import 'package:oman_tv/services/api_client.dart';
+import 'package:oman_tv/services/tv_notification_controller.dart';
 
 part 'announcement_state.dart';
 
@@ -19,7 +20,18 @@ class AnnouncementCubit extends Cubit<AnnouncementState> {
   // Pick up announcements added or expired from the admin portal
   static const Duration REFRESH_INTERVAL = Duration(minutes: 1);
 
-  AnnouncementCubit() : super(const AnnouncementState());
+  final _notifications = TvNotificationController.instance;
+
+  AnnouncementCubit() : super(const AnnouncementState()) {
+    _notifications.current.addListener(_onNotification);
+  }
+
+  // A notification sent with "Also add to Announcements" shows up right away
+  void _onNotification() {
+    if (_notifications.current.value?.addedToAnnouncements ?? false) {
+      fetchAnnouncements(isRefresh: true);
+    }
+  }
 
   Future<void> start() async {
     await fetchAnnouncements();
@@ -66,6 +78,7 @@ class AnnouncementCubit extends Cubit<AnnouncementState> {
   @override
   Future<void> close() {
     _refreshTimer?.cancel();
+    _notifications.current.removeListener(_onNotification);
     return super.close();
   }
 }
