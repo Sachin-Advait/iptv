@@ -5,10 +5,11 @@ class ApiConstants {
   // static const String wsUrl = "ws://192.168.1.199:8090/iptv/api/ws";
 
   // Home
-  static const String media =
-      'https://iptvapi.smartsuite.me/iptv/api/media/category';
   static const String layout =
       'https://iptvapi.smartsuite.me/iptv/api/player/config';
+
+  static const String media =
+      'https://iptvapi.smartsuite.me/iptv/api/media/category';
 
   // Category
   static const String home = '$media/Home';

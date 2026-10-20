@@ -34,6 +34,8 @@ Future<void> main() async {
     ),
   );
 
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
   runApp(const MyApp());
 }
 
