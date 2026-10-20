@@ -19,6 +19,10 @@ class ApiConstants {
   static const String register =
       'https://iptvapi.smartsuite.me/iptv/api/player/register';
 
+  // Announcements currently live (active and inside their display window)
+  static const String announcements =
+      'https://iptvapi.smartsuite.me/iptv/api/announcements/active';
+
   // TV Display API
   static const String tvDisplay =
       "https://serveiqbackend.insyncproducts.online/serveiq/api/tv-display/branch/";

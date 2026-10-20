@@ -1,11 +1,13 @@
 // ignore_for_file: constant_identifier_names
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:oman_tv/common/constants/api_constants.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/services/connectivity_service.dart';
+import 'package:oman_tv/services/tv_notification_controller.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 class IptvSocketService {
@@ -132,6 +134,17 @@ class IptvSocketService {
             },
           );
 
+          // Full-screen notifications: one topic for all screens, one per TV
+          for (final topic in [
+            '/topic/tv-notification',
+            '/topic/tv-notification/$tvId',
+          ]) {
+            _stompClient?.subscribe(
+              destination: topic,
+              callback: _onNotificationFrame,
+            );
+          }
+
           // Subscribe to heartbeat topic (optional)
           _stompClient?.subscribe(
             destination: '/topic/heartbeat',
@@ -185,6 +198,18 @@ class IptvSocketService {
       _isConnecting = false;
       onConnectionError?.call('Failed to activate: $e');
       _scheduleReconnection();
+    }
+  }
+
+  void _onNotificationFrame(StompFrame frame) {
+    _lastMessageReceived = DateTime.now();
+    if (frame.body == null) return;
+    try {
+      final event = jsonDecode(frame.body!) as Map<String, dynamic>;
+      debugPrint('[IPTV-WS] 🔔 Notification ${event['action']} ${event['id']}');
+      TvNotificationController.instance.handleEvent(event);
+    } catch (e) {
+      debugPrint('[IPTV-WS] ⚠️ Bad notification payload: $e');
     }
   }
 

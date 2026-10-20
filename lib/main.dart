@@ -7,6 +7,7 @@ import 'package:oman_tv/common/constants/app_strings.dart';
 import 'package:oman_tv/common/utils/app_screen_util.dart';
 import 'package:oman_tv/common/utils/get_it.dart';
 import 'package:oman_tv/common/utils/global_keys.dart';
+import 'package:oman_tv/common/widgets/tv_notification_overlay.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
 import 'package:oman_tv/modules/dashboard/cubit/dashboard_cubit.dart';
@@ -74,6 +75,9 @@ class _MyAppState extends State<MyApp> {
                 title: AppStrings.appTitle,
                 debugShowCheckedModeBanner: false,
                 theme: AppThemes.lightTheme,
+                // Pushed notifications pop up above every page
+                builder: (context, child) =>
+                    TvNotificationOverlay(child: child ?? const SizedBox()),
               ),
             );
           },
