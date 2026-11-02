@@ -21,7 +21,7 @@
     
 
     <application
-        android:label="Oman TV"
+        android:label="IPTV"
         android:usesCleartextTraffic="true"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"

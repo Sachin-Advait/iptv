@@ -30,7 +30,6 @@ class DashboardCubit extends Cubit<DashboardState> {
 
   // Configuration
   static const Duration HEALTH_CHECK_INTERVAL = Duration(seconds: 30);
-  static const Duration HEARTBEAT_TIMEOUT = Duration(seconds: 150);
   static const Duration MESSAGE_TIMEOUT = Duration(minutes: 5);
   static const Duration DATA_REFRESH_INTERVAL = Duration(minutes: 2);
 
@@ -110,15 +109,16 @@ class DashboardCubit extends Cubit<DashboardState> {
   Future<void> initializeWebSocket(String tvId) async {
     _currentTvId = tvId;
 
-    if (_connectivityService.isConnected) {
-      await _wsManager.connect(tvId);
-      _startHealthCheck();
-      _startDataRefreshTimer();
-    } else {
-      debugPrint('[DASHBOARD] ⏸️ Skipping WebSocket init - no network');
-    }
+    // Always hand the TV id to the socket service, even with no network:
+    // it remembers it and connects as soon as the network comes up.
+    await _wsManager.connect(tvId);
+    _startHealthCheck();
+    _startDataRefreshTimer();
   }
 
+  /// Reconnect/heartbeat handling lives in [IptvSocketService]. This only
+  /// pulls fresh data over REST when the socket has been quiet for a while,
+  /// in case an update was missed.
   void _startHealthCheck() {
     _healthCheckTimer?.cancel();
 
@@ -132,36 +132,27 @@ class DashboardCubit extends Cubit<DashboardState> {
       final lastHeartbeat = _wsManager.lastHeartbeatReceived;
       final lastMessage = _wsManager.lastMessageReceived;
 
-      if (lastHeartbeat != null && lastMessage != null) {
-        final timeSinceLastHeartbeat = now.difference(lastHeartbeat);
-        final timeSinceLastMessage = now.difference(lastMessage);
+      debugPrint(
+        '[DASHBOARD] 🔍 Health check - Connected: ${_wsManager.isConnected}, '
+        'Last heartbeat: ${lastHeartbeat == null ? '-' : '${now.difference(lastHeartbeat).inSeconds}s'}, '
+        'Last message: ${lastMessage == null ? '-' : '${now.difference(lastMessage).inSeconds}s'}',
+      );
 
-        debugPrint(
-          '[DASHBOARD] 🔍 Health check - Connected: ${_wsManager.isConnected}, '
-          'Last heartbeat: ${timeSinceLastHeartbeat.inSeconds}s, '
-          'Last message: ${timeSinceLastMessage.inSeconds}s',
-        );
+      if (lastMessage == null || !_wsManager.isConnected) return;
+      final timeSinceLastMessage = now.difference(lastMessage);
 
-        // Check heartbeat
-        if (timeSinceLastHeartbeat > HEARTBEAT_TIMEOUT) {
-          debugPrint('[DASHBOARD] ❌ Heartbeat timeout - reconnecting');
-          _wsManager.reconnect();
-          return;
-        }
+      // Only refresh data on MESSAGE_TIMEOUT boundary
+      if (timeSinceLastMessage > MESSAGE_TIMEOUT) {
+        final intervalsSinceLastMessage =
+            timeSinceLastMessage.inSeconds ~/ HEALTH_CHECK_INTERVAL.inSeconds;
+        final intervalsSinceTimeout =
+            MESSAGE_TIMEOUT.inSeconds ~/ HEALTH_CHECK_INTERVAL.inSeconds;
 
-        // Only refresh data on MESSAGE_TIMEOUT boundary
-        if (timeSinceLastMessage > MESSAGE_TIMEOUT && _wsManager.isConnected) {
-          final intervalsSinceLastMessage =
-              timeSinceLastMessage.inSeconds ~/ HEALTH_CHECK_INTERVAL.inSeconds;
-          final intervalsSinceTimeout =
-              MESSAGE_TIMEOUT.inSeconds ~/ HEALTH_CHECK_INTERVAL.inSeconds;
-
-          // Only refresh if this is the first check after timeout
-          if (intervalsSinceLastMessage == intervalsSinceTimeout &&
-              state.dashboardStatus == DashboardStatus.success) {
-            debugPrint('[DASHBOARD] 🔄 MESSAGE_TIMEOUT reached - refreshing');
-            refreshDashboardData();
-          }
+        // Only refresh if this is the first check after timeout
+        if (intervalsSinceLastMessage == intervalsSinceTimeout &&
+            state.dashboardStatus == DashboardStatus.success) {
+          debugPrint('[DASHBOARD] 🔄 MESSAGE_TIMEOUT reached - refreshing');
+          refreshDashboardData();
         }
       }
     });
@@ -277,8 +268,12 @@ class DashboardCubit extends Cubit<DashboardState> {
       await refreshDashboardData();
     }
 
-    // Reconnect WebSocket if needed
-    if (!_wsManager.isConnected && _currentTvId != null) {
+    // Reconnect WebSocket if needed. After a long sleep the socket can look
+    // connected but be dead, so the service's watchdog also checks heartbeats.
+    if (!_wsManager.isConnected &&
+        !_wsManager.isConnecting &&
+        _currentTvId != null) {
+      _wsManager.resetAttempts();
       await _wsManager.reconnect();
     }
   }

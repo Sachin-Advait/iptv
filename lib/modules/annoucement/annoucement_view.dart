@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oman_tv/common/utils/app_screen_util.dart';
 import 'package:oman_tv/configs/theme/app_colors.dart';
 import 'package:oman_tv/configs/theme/app_theme.dart';
+import 'package:oman_tv/models/announcement_model.dart';
+import 'package:oman_tv/modules/annoucement/cubit/announcement_cubit.dart';
 
 class AnnouncementView extends StatelessWidget {
   const AnnouncementView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => AnnouncementCubit()..start(),
+      child: _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Padding(
@@ -366,26 +376,66 @@ class AnnouncementView extends StatelessWidget {
             ),
           ),
           15.verticalSpace,
-          _buildAnnouncementCard(
-            context,
-            title: 'Ramadan Working Hours',
-            subtitle: '09:00 AM - 02:00PM',
+          Expanded(
+            child: BlocBuilder<AnnouncementCubit, AnnouncementState>(
+              builder: (context, state) {
+                switch (state.status) {
+                  case AnnouncementStatus.initial:
+                  case AnnouncementStatus.loading:
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF6B5D4F),
+                      ),
+                    );
+                  case AnnouncementStatus.error:
+                    return _buildAnnouncementMessage(
+                      context,
+                      'Unable to load announcements',
+                    );
+                  case AnnouncementStatus.success:
+                    if (state.announcements.isEmpty) {
+                      return _buildAnnouncementMessage(
+                        context,
+                        'No announcements right now',
+                      );
+                    }
+                    return _buildAnnouncementList(context, state.announcements);
+                }
+              },
+            ),
           ),
-          10.verticalSpace,
-          _buildAnnouncementCard(
-            context,
-            title: 'Public Holiday',
-            subtitle: 'Thursday, 21 March',
-          ),
-          10.verticalSpace,
-          _buildAnnouncementCard(
-            context,
-            title: 'System Maintenance',
-            subtitle: 'Friday, 6:00 PM',
-          ),
-          // Fill remaining space
-          const Spacer(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAnnouncementList(
+    BuildContext context,
+    List<AnnouncementModel> announcements,
+  ) {
+    return ListView.separated(
+      padding: EdgeInsets.zero,
+      itemCount: announcements.length,
+      separatorBuilder: (_, _) => 10.verticalSpace,
+      itemBuilder: (context, index) {
+        final announcement = announcements[index];
+        return _buildAnnouncementCard(
+          context,
+          title: announcement.title,
+          subtitle: announcement.subtitle ?? announcement.description ?? '',
+        );
+      },
+    );
+  }
+
+  Widget _buildAnnouncementMessage(BuildContext context, String message) {
+    return Center(
+      child: Text(
+        message,
+        style: context.regular.copyWith(
+          fontSize: 14.textMultiplier,
+          color: Colors.grey[600],
+        ),
       ),
     );
   }
@@ -419,14 +469,16 @@ class AnnouncementView extends StatelessWidget {
               color: AppColors.black,
             ),
           ),
-          2.verticalSpace,
-          Text(
-            subtitle,
-            style: context.regular.copyWith(
-              fontSize: 14.textMultiplier,
-              color: Colors.grey[600],
+          if (subtitle.isNotEmpty) ...[
+            2.verticalSpace,
+            Text(
+              subtitle,
+              style: context.regular.copyWith(
+                fontSize: 14.textMultiplier,
+                color: Colors.grey[600],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
